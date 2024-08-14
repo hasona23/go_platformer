@@ -10,11 +10,6 @@ type PhysicsEntity struct {
 	components.AnimSprite
 	components.Vel
 }
-type PhysicsEntityManager struct {
-	entities []*PhysicsEntity
-	Tiles    map[[2]int]components.Rect
-	offset   [][2]int
-}
 
 func NewPhyscisEntity(x, y, scale int) PhysicsEntity {
 	e := PhysicsEntity{}
@@ -27,7 +22,7 @@ func (e PhysicsEntity) GetAroundTiles(tiles map[[2]int]components.Rect) []compon
 
 	var tileRects []components.Rect
 	for _, i := range offset {
-		if tileRect, ok := tiles[[2]int{int(math.Ceil(float64(e.Collider().X/8))) + i[0], int(math.Ceil(float64(e.Collider().Y/8))) + i[1]}]; ok {
+		if tileRect, ok := tiles[[2]int{int(math.Ceil(float64(e.Collider().X)/8)) + i[0], int(math.Ceil(float64(e.Collider().Y)/8)) + i[1]}]; ok {
 			tileRects = append(tileRects, tileRect)
 		}
 
