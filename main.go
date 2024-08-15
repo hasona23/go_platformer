@@ -3,11 +3,12 @@ package main
 import (
 	"go_platformer/assets"
 	"go_platformer/components"
+	"go_platformer/entities"
 	"go_platformer/tilemap"
-	"image"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 const (
@@ -18,54 +19,43 @@ const (
 type Game struct {
 	cam     components.Camera
 	level1  *tilemap.Level
-	enemies []tilemap.Object
+	enemies []*entities.Enemy
+	player  *entities.Player
 }
 
 func (g *Game) Init() {
 	var err error
 	g.level1 = tilemap.NewLevel(assets.Level1Map)
 	g.cam = *components.NewCamera(0, 0)
-	X = 0
-	Y = 0
-	g.enemies, err = g.level1.GetObjectsByName("Enemies")
+	enemyObjects, err := g.level1.GetObjectsByName("Enemies")
+	for _, i := range enemyObjects {
+		g.enemies = append(g.enemies, entities.NewEnemy(int(i.X), int(i.Y)))
+	}
 	if err != nil {
 		log.Fatal("Error Getting enemy objects :", err)
 	}
+
+	g.player = entities.NewPlayer()
 }
-
-var X int
-var Y int
-
 func (g *Game) Update() error {
-
-	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
-		Y -= 10
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
-		Y += 10
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
-		X -= 10
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
-		X += 20
-	}
-	g.cam.GoTo(X, Y, DisplayWidth, DisplayHeight)
+	tilesCollisionMap := g.level1.GetCollisionTilesMap()
+	g.player.Update(tilesCollisionMap)
+	g.cam.FollowTarget(g.player.Pos.Pos[0], g.player.Pos.Pos[1], DisplayWidth, DisplayHeight, 30)
 	g.cam.Constrain(g.level1.GetSizeInPixels()[0], g.level1.GetSizeInPixels()[1], DisplayWidth, DisplayHeight)
+	for _, i := range g.enemies {
+		i.Update(tilesCollisionMap, g.player.Collider())
+	}
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	ebitenutil.DebugPrint(screen, "Hello")
 	g.level1.DrawCamera(screen, assets.SpriteSheet, g.cam, false)
-
 	for _, object := range g.enemies {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(float64(object.X), float64(object.Y))
-		op.GeoM.Translate(float64(g.cam.X), float64(g.cam.Y))
-		img := assets.SpriteSheet.SubImage(image.Rect(1*16, 5*16, 2*16, 6*16)).(*ebiten.Image)
-		screen.DrawImage(img, op)
-		op.GeoM.Reset()
+		object.Draw(screen, g.cam)
 	}
+	g.player.Draw(screen, g.cam)
+
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

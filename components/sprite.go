@@ -5,8 +5,8 @@ import (
 )
 
 type Sprite struct {
-	Img        *ebiten.Image
-	IsInverted int
+	Img  *ebiten.Image
+	Flip bool
 }
 
 func (sprite Sprite) GetWidth() int {

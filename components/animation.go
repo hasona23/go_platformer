@@ -2,6 +2,7 @@ package components
 
 import (
 	"errors"
+	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -12,11 +13,14 @@ type AnimSprite struct {
 	width, height int
 	Animations    map[string]AnimationFrame
 	Current       AnimationFrame
-	IsInverted    int
+	Flip          bool
 }
 
 func (sprite AnimSprite) GetWidth() int {
 	return sprite.Img.Bounds().Dx()
+}
+func (sprite AnimSprite) GetHeight() int {
+	return sprite.Img.Bounds().Dy()
 }
 
 func (sprite AnimSprite) Origin(op *ebiten.DrawImageOptions) {
@@ -36,25 +40,35 @@ func NewAnimeSprite(img *ebiten.Image, Width, Height int) AnimSprite {
 }
 
 func (a *AnimSprite) Add(animtion AnimationFrame) {
-	a.Animations[animtion.Name] = animtion
+	if len(a.Animations) == 0 {
+		a.Animations[animtion.Name] = animtion
+		a.Current = a.Animations[animtion.Name]
+	} else {
+		a.Animations[animtion.Name] = animtion
+	}
+
 }
 
 func (a *AnimSprite) playAnim() error {
 	var err error = nil
-	if a.Current.IsEmpty() {
-		err = errors.New("animation is empty")
-		return err
-	}
 	if _, ok := a.Animations[a.Current.Name]; ok {
 		a.Current.Update()
 	} else {
 		err = errors.New("there is no animation with this name")
 		return err
 	}
+	a.Img = a.Atlas.SubImage(image.Rect(a.Current.row_current*a.width,
+		a.Current.col_current*a.height,
+		(a.Current.row_current+1)*a.width,
+		(a.Current.col_current+1)*a.height,
+	)).(*ebiten.Image)
+
 	return nil
 }
 func (a *AnimSprite) ChangeAnim(name string) {
-	a.Current = a.Animations[name]
+	if a.Current.Name != name {
+		a.Current = a.Animations[name]
+	}
 }
 func (a *AnimSprite) Update() error {
 	err := a.playAnim()
