@@ -11,6 +11,7 @@ import (
 
 type Player struct {
 	*PhysicsEntity
+	Bullets   []*Bullet
 	isJumping bool
 }
 
@@ -70,9 +71,24 @@ func (p Player) Draw(screen *ebiten.Image, cam components.Camera) {
 		op.GeoM.Translate(float64(p.Pos.Pos[0]+cam.X+7), float64(float64(p.Pos.Pos[1]+cam.Y)-5.5))
 		screen.DrawImage(assets.SpriteSheet.SubImage(image.Rect(3*16, 4*16, 4*16, 5*16)).(*ebiten.Image), op)
 	}
+	for _, b := range p.Bullets {
+		b.Draw(screen, cam)
+	}
 }
 func (p *Player) shoot() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeyE) {
+		bSpeed := 0
+		if p.Anim.Flip {
+			bSpeed = -5
+		} else {
+			bSpeed = 5
+		}
+		p.Bullets = append(p.Bullets, NewBullet(p.Pos.Pos[0], p.Pos.Pos[1], bSpeed))
 		p.Anim.ChangeAnim("shoot")
+	}
+}
+func (p *Player) UpdateBullets(tiles map[[2]int]components.Rect, enemies []*Enemy) {
+	for i := range p.Bullets {
+		p.Bullets[i].Update(tiles, enemies)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"go_platformer/entities"
 	"go_platformer/tilemap"
 	"log"
+	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -40,11 +41,17 @@ func (g *Game) Init() {
 func (g *Game) Update() error {
 	tilesCollisionMap := g.level1.GetCollisionTilesMap()
 	g.player.Update(tilesCollisionMap)
+	g.player.UpdateBullets(tilesCollisionMap, g.enemies)
 	g.cam.FollowTarget(g.player.Pos.Pos[0], g.player.Pos.Pos[1], DisplayWidth, DisplayHeight, 30)
 	g.cam.Constrain(g.level1.GetSizeInPixels()[0], g.level1.GetSizeInPixels()[1], DisplayWidth, DisplayHeight)
 	for _, i := range g.enemies {
-		i.Update(tilesCollisionMap, g.player.Collider())
+		if !i.Dead {
+			i.Update(tilesCollisionMap)
+		}
 	}
+	g.player.Bullets = slices.DeleteFunc(g.player.Bullets, func(b *entities.Bullet) bool { return b.Dead })
+	g.enemies = slices.DeleteFunc(g.enemies, func(e *entities.Enemy) bool { return e.Dead })
+
 	return nil
 }
 

@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"fmt"
 	"go_platformer/assets"
 	"go_platformer/components"
 	"math"
@@ -10,6 +9,7 @@ import (
 
 type Enemy struct {
 	*PhysicsEntity
+	Dead bool
 }
 
 func NewEnemy(x, y int) *Enemy {
@@ -32,9 +32,11 @@ func NewEnemy(x, y int) *Enemy {
 		enemy.Anim.Add(e3)
 		enemy.Vel.Dir = [2]float32{1, 1}
 	}
+	enemy.Dead = false
 	return enemy
 }
-func (e *Enemy) Update(tiles map[[2]int]components.Rect, playerRect components.Rect) {
+func (e *Enemy) Update(tiles map[[2]int]components.Rect) {
+
 	e.PhysicsEntity.Move(tiles)
 
 	_, ok := e.GetAroundTilesMap(tiles)[[2]int{int(math.Ceil(float64(e.Collider().X)/float64(e.Anim.GetWidth())) + float64(e.Vel.Dir[0])),
@@ -44,7 +46,5 @@ func (e *Enemy) Update(tiles map[[2]int]components.Rect, playerRect components.R
 		e.Vel.Dir[0] *= -1
 		e.Anim.Flip = !e.Anim.Flip
 	}
-	if e.Collider().Collide(playerRect) {
-		fmt.Println("Collided Player")
-	}
+
 }
