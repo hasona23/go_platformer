@@ -17,8 +17,8 @@ func NewEnemy(x, y int) *Enemy {
 	enemy.PhysicsEntity = NewPhyscisEntity(x, y, 1, 1, "enemy")
 	enemy.Anim = components.NewAnimeSprite(assets.SpriteSheet, 16, 16)
 	e1 := (components.NewAnimationFrame(1, 3, 5, 6, .5, "yellowbee"))
-	e2 := (components.NewAnimationFrame(3, 5, 5, 6, .2, "bluebee"))
-	e3 := (components.NewAnimationFrame(5, 7, 5, 6, 0.7, "worm"))
+	e2 := (components.NewAnimationFrame(3, 5, 5, 6, .5, "bluebee"))
+	e3 := (components.NewAnimationFrame(5, 7, 5, 6, .5, "worm"))
 	switch rand.Int31n(4) {
 	case 1:
 		enemy.Anim.Add(e1)
@@ -28,14 +28,15 @@ func NewEnemy(x, y int) *Enemy {
 		enemy.Anim.Add(e2)
 		enemy.Vel.Dir = [2]float32{1, 0}
 		enemy.Pos.Pos[1] += 4
-	case 3:
+	default:
 		enemy.Anim.Add(e3)
 		enemy.Vel.Dir = [2]float32{1, 1}
+
 	}
 	enemy.Dead = false
 	return enemy
 }
-func (e *Enemy) Update(tiles map[[2]int]components.Rect) {
+func (e *Enemy) Update(tiles map[[2]int]components.Rect, player *Player) {
 
 	e.PhysicsEntity.Move(tiles)
 
@@ -45,6 +46,13 @@ func (e *Enemy) Update(tiles map[[2]int]components.Rect) {
 	if e.Collisions["right"] || e.Collisions["left"] || !ok {
 		e.Vel.Dir[0] *= -1
 		e.Anim.Flip = !e.Anim.Flip
+	}
+	if e.Collider().Collide(player.Collider()) {
+		if !player.isJumping || (player.isJumping && player.Vel.Dir[1] <= 0) {
+			player.Died = true
+		} else {
+			e.Dead = true
+		}
 	}
 
 }

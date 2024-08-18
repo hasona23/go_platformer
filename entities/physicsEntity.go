@@ -52,6 +52,10 @@ func (e PhysicsEntity) GetAroundTiles(tiles map[[2]int]components.Rect) []compon
 	}
 	return tileRects
 }
+
+// Gets from the map of collision tileset from tilemap
+//
+// this gets the collision tiles in all directions of player (square)
 func (e PhysicsEntity) GetAroundTilesMap(tiles map[[2]int]components.Rect) map[[2]int]components.Rect {
 	offset := [][2]int{{1, 0}, {-1, 0}, {0, -1}, {0, 1}, {1, -1}, {-1, 1}, {-1, -1}, {1, 1}, {0, 0}}
 
@@ -64,6 +68,10 @@ func (e PhysicsEntity) GetAroundTilesMap(tiles map[[2]int]components.Rect) map[[
 	}
 	return tileRects
 }
+
+// Collider return the entity rect
+//
+// Collider is adjusted so that pos is moved half size of sprite up and to left
 func (e *PhysicsEntity) Collider() components.Rect {
 	bounds := e.Anim.Img.Bounds()
 	return components.NewRect(
@@ -73,6 +81,7 @@ func (e *PhysicsEntity) Collider() components.Rect {
 		int(bounds.Dy()))
 }
 
+// Move Moves the entity with collision WithTiles
 func (e *PhysicsEntity) Move(tiles map[[2]int]components.Rect) {
 	//e.Vel.NormalizeDir()
 	change := [2]int{int(math.Round(float64(e.Vel.Speed * e.Vel.Dir[0]))), int(math.Round(float64((e.Vel.Speed * e.Vel.Dir[1]))))}
@@ -119,11 +128,11 @@ func (e *PhysicsEntity) Move(tiles map[[2]int]components.Rect) {
 		e.Pos.Pos[1] += change[1]
 	}
 	if !e.Collisions["down"] && change[1] > 0 {
-
 		e.Pos.Pos[1] += change[1]
 	}
-	if e.Collisions["up"] {
-		e.Vel.Dir[1] *= -1
+
+	if e.Collisions["up"] && e.Vel.Dir[1] < 0 {
+		e.Vel.Dir[1] = -.25
 	}
 	if e.Collisions["left"] {
 		e.Anim.Flip = false
@@ -131,7 +140,5 @@ func (e *PhysicsEntity) Move(tiles map[[2]int]components.Rect) {
 	if e.Collisions["right"] {
 		e.Anim.Flip = true
 	}
-
 	e.Anim.Update()
-
 }

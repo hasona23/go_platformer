@@ -26,7 +26,11 @@ func (timer *Timer) Ticked() bool {
 func (timer *Timer) Reset() {
 	timer.current_time = 0
 }
-func (timer *Timer) UpdateTimer() {
+func (timer *Timer) UpdateTimerTPS() {
 	timer.current_time += 1 / ebiten.ActualTPS()
+	//fmt.Println(ebiten.ActualTPS())
+}
+func (timer *Timer) UpdateTimer() {
+	timer.current_time += 1
 	//fmt.Println(ebiten.ActualTPS())
 }

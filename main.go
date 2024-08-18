@@ -9,7 +9,7 @@ import (
 	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 const (
@@ -22,6 +22,7 @@ type Game struct {
 	level1  *tilemap.Level
 	enemies []*entities.Enemy
 	player  *entities.Player
+	state   GameState
 }
 
 func (g *Game) Init() {
@@ -35,33 +36,46 @@ func (g *Game) Init() {
 	if err != nil {
 		log.Fatal("Error Getting enemy objects :", err)
 	}
-
+	g.state = Main
 	g.player = entities.NewPlayer()
 }
 func (g *Game) Update() error {
-	tilesCollisionMap := g.level1.GetCollisionTilesMap()
-	g.player.Update(tilesCollisionMap)
-	g.player.UpdateBullets(tilesCollisionMap, g.enemies)
-	g.cam.FollowTarget(g.player.Pos.Pos[0], g.player.Pos.Pos[1], DisplayWidth, DisplayHeight, 30)
-	g.cam.Constrain(g.level1.GetSizeInPixels()[0], g.level1.GetSizeInPixels()[1], DisplayWidth, DisplayHeight)
-	for _, i := range g.enemies {
-		if !i.Dead {
-			i.Update(tilesCollisionMap)
-		}
+	if g.player.Died {
+		g.Init()
 	}
-	g.player.Bullets = slices.DeleteFunc(g.player.Bullets, func(b *entities.Bullet) bool { return b.Dead })
-	g.enemies = slices.DeleteFunc(g.enemies, func(e *entities.Enemy) bool { return e.Dead })
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		g.state = Pause
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) && g.state == Pause {
+		g.state = Main
+	}
 
+	if g.state == Main {
+		tilesCollisionMap := g.level1.GetCollisionTilesMap()
+		g.player.Update(tilesCollisionMap)
+		g.player.UpdateBullets(tilesCollisionMap, g.enemies)
+		g.cam.FollowTarget(g.player.Pos.Pos[0], g.player.Pos.Pos[1], DisplayWidth, DisplayHeight, 30)
+		g.cam.Constrain(g.level1.GetSizeInPixels()[0], g.level1.GetSizeInPixels()[1], DisplayWidth, DisplayHeight)
+		for _, i := range g.enemies {
+			if !i.Dead {
+				i.Update(tilesCollisionMap, g.player)
+			}
+		}
+
+		g.player.Bullets = slices.DeleteFunc(g.player.Bullets, func(b *entities.Bullet) bool { return b.Dead })
+		g.enemies = slices.DeleteFunc(g.enemies, func(e *entities.Enemy) bool { return e.Dead })
+	}
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(screen, "Hello")
-	g.level1.DrawCamera(screen, assets.SpriteSheet, g.cam, false)
-	for _, object := range g.enemies {
-		object.Draw(screen, g.cam)
+	if g.state != Start {
+		g.level1.DrawCamera(screen, assets.SpriteSheet, g.cam, false)
+		for _, object := range g.enemies {
+			object.Draw(screen, g.cam)
+		}
+		g.player.Draw(screen, g.cam)
 	}
-	g.player.Draw(screen, g.cam)
 
 }
 
