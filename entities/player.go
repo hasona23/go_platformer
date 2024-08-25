@@ -78,11 +78,10 @@ func (p Player) Draw(screen *ebiten.Image, cam components.Camera) {
 	if p.isShooting {
 		op := &ebiten.DrawImageOptions{}
 		if !p.Anim.Flip {
-			op.GeoM.Translate(float64(p.Pos.Pos[0]+cam.X+8), float64(float64(p.Pos.Pos[1]+cam.Y)-5.5))
+			op.GeoM.Translate(float64(p.Pos.Pos[0]+cam.X+16), float64(float64(p.Pos.Pos[1]+cam.Y)+2))
 		} else {
 
-			p.Anim.Origin(op)
-			op.GeoM.Scale(-1, 1)
+			p.Anim.FlipHorizontal(op)
 			op.GeoM.Translate(float64(p.Pos.Pos[0]+cam.X-16), float64(float64(p.Pos.Pos[1]+cam.Y))+2)
 
 		}

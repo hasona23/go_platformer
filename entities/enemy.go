@@ -23,11 +23,11 @@ func NewEnemy(x, y int) *Enemy {
 	case 1:
 		enemy.Anim.Add(e1)
 		enemy.Vel.Dir = [2]float32{1, 0}
-		enemy.Pos.Pos[1] += 4
+		enemy.Pos.Pos[1] -= 4
 	case 2:
 		enemy.Anim.Add(e2)
 		enemy.Vel.Dir = [2]float32{1, 0}
-		enemy.Pos.Pos[1] += 4
+		enemy.Pos.Pos[1] -= 4
 	default:
 		enemy.Anim.Add(e3)
 		enemy.Vel.Dir = [2]float32{1, 1}
@@ -48,7 +48,7 @@ func (e *Enemy) Update(tiles map[[2]int]components.Rect, player *Player) {
 		e.Anim.Flip = !e.Anim.Flip
 	}
 	if e.Collider().Collide(player.Collider()) {
-		if !player.isJumping || (player.isJumping && player.Vel.Dir[1] <= 0) {
+		if !player.isJumping || (player.isJumping && player.Vel.Dir[1] <= 0) || player.Pos.Pos[1] >= e.Pos.Pos[1] {
 			player.Died = true
 		} else {
 			e.Dead = true

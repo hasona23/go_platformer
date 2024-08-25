@@ -16,10 +16,13 @@ var (
 	soundFiles embed.FS
 	//go:embed maps/*
 	mapFiles embed.FS
+	//go:embed fonts/*
+	fontFiles embed.FS
 )
 var (
 	SpriteSheet *ebiten.Image
 	Level1Map   []byte
+	PixelFont   []byte
 )
 
 func InitAssets() {
@@ -36,5 +39,8 @@ func InitAssets() {
 	if err != nil {
 		log.Fatal("Error Loading Level 1")
 	}
-
+	PixelFont, err = fontFiles.ReadFile("fonts/pixelFont.ttf")
+	if err != nil {
+		log.Fatal("Error loading PixelFont :", err)
+	}
 }

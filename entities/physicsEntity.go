@@ -26,19 +26,15 @@ func NewPhyscisEntity(x, y, scale int, speed float32, etype string) *PhysicsEnti
 }
 func (e PhysicsEntity) Draw(screen *ebiten.Image, camera components.Camera) {
 	op := &ebiten.DrawImageOptions{}
-	e.Anim.Origin(op)
+	//	e.Anim.Origin(op)
 	if e.Anim.Flip {
-		op.GeoM.Scale(-e.Pos.Scale, e.Pos.Scale)
-
-	} else {
-		op.GeoM.Scale(e.Pos.Scale, e.Pos.Scale)
-
+		e.Anim.FlipHorizontal(op)
 	}
-
 	op.GeoM.Translate(float64(e.Pos.Pos[0]+camera.X), float64(e.Pos.Pos[1]+camera.Y))
 
 	screen.DrawImage(e.Anim.Img, op)
-	//vector.DrawFilledRect(screen, float32(e.Collider().X+camera.X), float32(e.Collider().Y+camera.Y), float32(e.Collider().Width), float32(e.Collider().Height), color.Black, false)
+	// vector.StrokeRect(screen, float32(e.Collider().X+camera.X), float32(e.Collider().Y+camera.Y),
+	//  float32(e.Collider().Width), float32(e.Collider().Height), 2, color.Black, false)
 }
 func (e PhysicsEntity) GetAroundTiles(tiles map[[2]int]components.Rect) []components.Rect {
 	offset := [][2]int{{1, 0}, {-1, 0}, {0, -1}, {0, 1}, {1, -1}, {-1, 1}, {-1, -1}, {1, 1}, {0, 0}}
@@ -75,8 +71,8 @@ func (e PhysicsEntity) GetAroundTilesMap(tiles map[[2]int]components.Rect) map[[
 func (e *PhysicsEntity) Collider() components.Rect {
 	bounds := e.Anim.Img.Bounds()
 	return components.NewRect(
-		int(e.Pos.Pos[0])-(bounds.Dx())/2,
-		int(e.Pos.Pos[1])-(bounds.Dy())/2,
+		int(e.Pos.Pos[0]),
+		int(e.Pos.Pos[1]),
 		int(bounds.Dx()),
 		int(bounds.Dy()))
 }

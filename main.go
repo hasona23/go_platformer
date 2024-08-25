@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
+	ui "go_platformer/UI"
 	"go_platformer/assets"
 	"go_platformer/components"
 	"go_platformer/entities"
 	"go_platformer/tilemap"
+	"image/color"
 	"log"
 	"slices"
 
@@ -22,6 +25,7 @@ type Game struct {
 	level1  *tilemap.Level
 	enemies []*entities.Enemy
 	player  *entities.Player
+	label   ui.Label
 	state   GameState
 }
 
@@ -38,6 +42,8 @@ func (g *Game) Init() {
 	}
 	g.state = Main
 	g.player = entities.NewPlayer()
+
+	g.label = *ui.NewLabel("Hello", 5, 5, assets.PixelFont, 16, color.Black)
 }
 func (g *Game) Update() error {
 	if g.player.Died {
@@ -75,8 +81,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			object.Draw(screen, g.cam)
 		}
 		g.player.Draw(screen, g.cam)
+		g.player.PhysicsEntity.Draw(screen, g.cam)
 	}
-
+	g.label.Text = fmt.Sprintf("Ammo:%d", g.player.Ammo)
+	g.label.Draw(screen)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
