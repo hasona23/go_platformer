@@ -34,7 +34,7 @@ func (e PhysicsEntity) Draw(screen *ebiten.Image, camera components.Camera) {
 
 	screen.DrawImage(e.Anim.Img, op)
 	// vector.StrokeRect(screen, float32(e.Collider().X+camera.X), float32(e.Collider().Y+camera.Y),
-	//  float32(e.Collider().Width), float32(e.Collider().Height), 2, color.Black, false)
+	// float32(e.Collider().Width), float32(e.Collider().Height), 2, color.Black, false)
 }
 func (e PhysicsEntity) GetAroundTiles(tiles map[[2]int]components.Rect) []components.Rect {
 	offset := [][2]int{{1, 0}, {-1, 0}, {0, -1}, {0, 1}, {1, -1}, {-1, 1}, {-1, -1}, {1, 1}, {0, 0}}
@@ -78,62 +78,89 @@ func (e *PhysicsEntity) Collider() components.Rect {
 }
 
 // Move Moves the entity with collision WithTiles
+const (
+	Up    = "up"
+	Down  = "down"
+	Left  = "left"
+	Right = "right"
+)
+
 func (e *PhysicsEntity) Move(tiles map[[2]int]components.Rect) {
-	//e.Vel.NormalizeDir()
-	change := [2]int{int(math.Round(float64(e.Vel.Speed * e.Vel.Dir[0]))), int(math.Round(float64((e.Vel.Speed * e.Vel.Dir[1]))))}
-	e.Collisions["up"] = false
-	e.Collisions["down"] = false
-	e.Collisions["left"] = false
-	e.Collisions["right"] = false
+	change := e.calculateChange()
+	e.resetCollisions()
 
+	e.handleHorizontalMovement(tiles, change[0])
+	e.handleVerticalMovement(tiles, change[1])
+
+	e.updateVelocity()
+	e.updateAnimation()
+}
+
+func (e *PhysicsEntity) calculateChange() [2]int {
+	return [2]int{
+		int(math.Round(float64(e.Vel.Speed * e.Vel.Dir[0]))),
+		int(math.Round(float64(e.Vel.Speed * e.Vel.Dir[1]))),
+	}
+}
+
+func (e *PhysicsEntity) resetCollisions() {
+	e.Collisions = map[string]bool{
+		Up: false, Down: false, Left: false, Right: false,
+	}
+}
+
+func (e *PhysicsEntity) handleHorizontalMovement(tiles map[[2]int]components.Rect, changeX int) {
 	eRect := e.Collider()
-	eRect.X += change[0]
-	for _, rect := range e.GetAroundTiles(tiles) {
-		if eRect.Collide(rect) {
-			if change[0] > 0 {
-				e.Collisions["right"] = true
-			}
-			if change[0] < 0 {
-				e.Collisions["left"] = true
-			}
-		}
-	}
-	if !e.Collisions["right"] && change[0] > 0 {
-		e.Pos.Pos[0] += change[0]
-		e.Anim.Flip = false
-	}
-	if !e.Collisions["left"] && change[0] < 0 {
-		e.Pos.Pos[0] += change[0]
-		e.Anim.Flip = true
-	}
+	eRect.X += changeX
 
-	eRect = e.Collider()
-	eRect.Y += change[1]
 	for _, rect := range e.GetAroundTiles(tiles) {
 		if eRect.Collide(rect) {
-			if change[1] < 0 {
-				e.Collisions["up"] = true
+			if changeX > 0 {
+				e.Collisions[Right] = true
+			} else if changeX < 0 {
+				e.Collisions[Left] = true
 			}
-			if change[1] > 0 {
-				e.Collisions["down"] = true
-			}
+			return
 		}
 	}
 
-	if !e.Collisions["up"] && change[1] < 0 {
-		e.Pos.Pos[1] += change[1]
+	if !e.Collisions[Left] && changeX < 0 || !e.Collisions[Right] && changeX > 0 {
+		e.Pos.Pos[0] += changeX
+		e.Anim.Flip = changeX < 0
 	}
-	if !e.Collisions["down"] && change[1] > 0 {
-		e.Pos.Pos[1] += change[1]
+}
+
+func (e *PhysicsEntity) handleVerticalMovement(tiles map[[2]int]components.Rect, changeY int) {
+	eRect := e.Collider()
+	eRect.Y += changeY
+
+	for _, rect := range e.GetAroundTiles(tiles) {
+		if eRect.Collide(rect) {
+			if changeY < 0 {
+				e.Collisions[Up] = true
+			} else if changeY > 0 {
+				e.Collisions[Down] = true
+			}
+			return
+		}
 	}
 
-	if e.Collisions["up"] && e.Vel.Dir[1] < 0 {
-		e.Vel.Dir[1] = -.25
+	if !e.Collisions[Up] && changeY < 0 || !e.Collisions[Down] && changeY > 0 {
+		e.Pos.Pos[1] += changeY
 	}
-	if e.Collisions["left"] {
+}
+
+func (e *PhysicsEntity) updateVelocity() {
+	if e.Collisions[Up] && e.Vel.Dir[1] < 0 {
+		e.Vel.Dir[1] = -0.25
+	}
+
+}
+
+func (e *PhysicsEntity) updateAnimation() {
+	if e.Collisions[Left] {
 		e.Anim.Flip = false
-	}
-	if e.Collisions["right"] {
+	} else if e.Collisions[Right] {
 		e.Anim.Flip = true
 	}
 	e.Anim.Update()

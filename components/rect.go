@@ -26,6 +26,9 @@ func (r Rect) Left() int {
 func (r Rect) Top() int {
 	return r.Y
 }
+func (r Rect) Contains(x, y int) bool {
+	return (x < r.Right() && x > r.Left() && y < r.Bottom() && y > r.Top())
+}
 func (r Rect) Collide(other Rect) bool {
 	return r.X < other.Right() &&
 		other.X < r.Right() &&

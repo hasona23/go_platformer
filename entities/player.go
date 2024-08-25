@@ -38,7 +38,7 @@ func Lerp(a, b, t float32) float32 {
 
 func (p *Player) Update(tiles map[[2]int]components.Rect) {
 	//reached peak of jump
-	if p.Collisions["down"] {
+	if p.Collisions[Down] {
 		p.isJumping = false
 	}
 	p.Vel.Dir[0] = 0

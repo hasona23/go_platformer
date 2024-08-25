@@ -43,7 +43,7 @@ func (e *Enemy) Update(tiles map[[2]int]components.Rect, player *Player) {
 	_, ok := e.GetAroundTilesMap(tiles)[[2]int{int(math.Ceil(float64(e.Collider().X)/float64(e.Anim.GetWidth())) + float64(e.Vel.Dir[0])),
 		int(math.Ceil(float64(e.Collider().Y)/float64(e.Anim.GetHeight()) + 1))}]
 
-	if e.Collisions["right"] || e.Collisions["left"] || !ok {
+	if e.Collisions[Right] || e.Collisions[Left] || !ok {
 		e.Vel.Dir[0] *= -1
 		e.Anim.Flip = !e.Anim.Flip
 	}
