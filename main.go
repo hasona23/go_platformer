@@ -25,7 +25,7 @@ type Game struct {
 	level1  *tilemap.Level
 	enemies []*entities.Enemy
 	player  *entities.Player
-	label   ui.Label
+	label   *ui.Label
 	state   GameState
 }
 
@@ -43,12 +43,13 @@ func (g *Game) Init() {
 	g.state = Main
 	g.player = entities.NewPlayer()
 
-	g.label = *ui.NewLabel("Hello", 5, 5, assets.PixelFont, 16, color.Black)
+	g.label = ui.NewLabel("Hello", 5, 5, assets.PixelFont, 16, color.Black)
 }
 func (g *Game) Update() error {
 	if g.player.Died {
 		g.Init()
 	}
+
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		g.state = Pause
 	}
