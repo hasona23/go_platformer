@@ -48,10 +48,10 @@ func (e *Enemy) Update(tiles map[[2]int]components.Rect, player *Player) {
 		e.Anim.Flip = !e.Anim.Flip
 	}
 	if e.Collider().Collide(player.Collider()) {
-		if !player.isJumping || (player.isJumping && player.Vel.Dir[1] <= 0) || player.Pos.Pos[1] >= e.Pos.Pos[1] {
-			player.Died = true
-		} else {
+		if player.Vel.Dir[1] > 0 && player.Collider().Y < e.Collider().Y {
 			e.Dead = true
+		} else {
+			player.Died = true
 		}
 	}
 

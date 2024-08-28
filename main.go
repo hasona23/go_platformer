@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
-	ui "go_platformer/UI"
 	"go_platformer/assets"
 	"go_platformer/components"
 	"go_platformer/entities"
 	"go_platformer/tilemap"
+	ui "go_platformer/ui"
 	"image/color"
 	"log"
 	"slices"
@@ -21,12 +20,13 @@ const (
 )
 
 type Game struct {
-	cam     components.Camera
-	level1  *tilemap.Level
-	enemies []*entities.Enemy
-	player  *entities.Player
-	label   *ui.Label
-	state   GameState
+	cam       components.Camera
+	level1    *tilemap.Level
+	enemies   []*entities.Enemy
+	player    *entities.Player
+	label     *ui.Label
+	state     GameState
+	uimanager *ui.UIManager
 }
 
 func (g *Game) Init() {
@@ -40,15 +40,21 @@ func (g *Game) Init() {
 	if err != nil {
 		log.Fatal("Error Getting enemy objects :", err)
 	}
-	g.state = Main
+	g.state = Start
 	g.player = entities.NewPlayer()
 
 	g.label = ui.NewLabel("Hello", 5, 5, assets.PixelFont, 16, color.Black)
+	button1 := ui.NewButton("start", 100, 100, 16, 2, assets.PixelFont, color.Black, color.White)
+	button2 := ui.NewButton("save", 100, 150, 16, 2, assets.PixelFont, color.Black, color.White)
+	button3 := ui.NewButton("quit", 100, 200, 16, 2, assets.PixelFont, color.Black, color.White)
+	g.uimanager = ui.NewUIManager()
+	g.uimanager.AddButton(button1)
+	g.uimanager.AddButton(button2)
+	g.uimanager.AddButton(button3)
+
 }
+
 func (g *Game) Update() error {
-	if g.player.Died {
-		g.Init()
-	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		g.state = Pause
@@ -56,8 +62,15 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) && g.state == Pause {
 		g.state = Main
 	}
-
+	if g.state == Start {
+		g.uimanager.Update()
+	}
 	if g.state == Main {
+		if g.player.Died {
+			g.enemies = []*entities.Enemy{}
+			g.Init()
+		}
+
 		tilesCollisionMap := g.level1.GetCollisionTilesMap()
 		g.player.Update(tilesCollisionMap)
 		g.player.UpdateBullets(tilesCollisionMap, g.enemies)
@@ -84,8 +97,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.player.Draw(screen, g.cam)
 		g.player.PhysicsEntity.Draw(screen, g.cam)
 	}
-	g.label.Text = fmt.Sprintf("Ammo:%d", g.player.Ammo)
-	g.label.Draw(screen)
+	//g.label.Text = fmt.Sprintf("Ammo:%d", g.player.Ammo)
+	//g.label.Draw(screen)
+	if g.state == Start {
+		g.uimanager.Draw(screen)
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

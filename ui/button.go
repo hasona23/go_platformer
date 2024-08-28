@@ -5,6 +5,7 @@ import (
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
@@ -63,11 +64,13 @@ type ButtonStyle struct {
 	TextOrientation Orientation
 }
 
+// Draw button
 func (b *Button) Draw(screen *ebiten.Image) {
 	//check if has sprite otherwise will draw border(normal button)
 	b.drawButton(screen)
 	b.drawButtonText(screen)
 }
+
 func (b *Button) drawButton(screen *ebiten.Image) {
 	if b.sprite != nil {
 		op := &ebiten.DrawImageOptions{}
@@ -109,6 +112,7 @@ func (b *Button) drawButtonText(screen *ebiten.Image) {
 
 }
 
+// draw button with camera in main so not fixed to screen
 func (b *Button) DrawCam(screen *ebiten.Image, cam components.Camera) {
 	//check if has sprite otherwise will draw border(normal button)
 	b.drawButtonCam(screen, cam)
@@ -155,4 +159,14 @@ func (b *Button) drawButtonTextCam(screen *ebiten.Image, cam components.Camera) 
 	text.Draw(screen, b.Text.Text, &text.GoTextFace{Source: b.Text.Style.Font, Size: float64(b.Text.Style.Size)}, opText)
 	b.rect = components.NewRect(b.ButtonStyle.X, b.ButtonStyle.Y, int(width*b.ButtonStyle.Scale), int(height*b.ButtonStyle.Scale))
 
+}
+
+// check if button is being hovered on by the mouse cursor
+func (b *Button) IsHover() bool {
+	return b.rect.Contains(ebiten.CursorPosition())
+}
+
+// check if button is pressed by mouse
+func (b *Button) IsPressed() bool {
+	return (b.IsHover() && inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft))
 }

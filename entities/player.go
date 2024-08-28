@@ -37,7 +37,6 @@ func Lerp(a, b, t float32) float32 {
 }
 
 func (p *Player) Update(tiles map[[2]int]components.Rect) {
-	//reached peak of jump
 	if p.Collisions[Down] {
 		p.isJumping = false
 	}
@@ -49,6 +48,7 @@ func (p *Player) Update(tiles map[[2]int]components.Rect) {
 		p.Vel.Dir[1] = min(2, p.Vel.Dir[1]+0.1)
 	}
 	//Movement Controls
+
 	if (inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) || inpututil.IsKeyJustPressed(ebiten.KeyW) || inpututil.IsKeyJustPressed(ebiten.KeySpace)) && !p.isJumping {
 		p.Vel.Dir[1] = -3
 		p.isJumping = true
