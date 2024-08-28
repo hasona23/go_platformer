@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go_platformer/assets"
 	"go_platformer/components"
 	"go_platformer/entities"
@@ -44,14 +45,25 @@ func (g *Game) Init() {
 	g.player = entities.NewPlayer()
 
 	g.label = ui.NewLabel("Hello", 5, 5, assets.PixelFont, 16, color.Black)
-	button1 := ui.NewButton("start", 100, 100, 16, 2, assets.PixelFont, color.Black, color.White)
-	button2 := ui.NewButton("save", 100, 150, 16, 2, assets.PixelFont, color.Black, color.White)
-	button3 := ui.NewButton("quit", 100, 200, 16, 2, assets.PixelFont, color.Black, color.White)
+	button1 := ui.NewButton("start", 100, 100, 16, 2, assets.PixelFont, color.White, color.Black, color.White)
+	button2 := ui.NewButton("save", 100, 150, 16, 2, assets.PixelFont, color.White, color.Black, color.White)
+	button3 := ui.NewButton("quit", 100, 200, 16, 2, assets.PixelFont, color.White, color.Black, color.White)
 	g.uimanager = ui.NewUIManager()
 	g.uimanager.AddButton(button1)
 	g.uimanager.AddButton(button2)
 	g.uimanager.AddButton(button3)
+	g.uimanager.ApplyHoverToAllButtons(hover)
+	button1.OnClick = func(b *ui.Button) {
+		if g.state != Main {
+			g.state = Main
+		}
+	}
+}
 
+func hover(b *ui.Button) {
+	b.BackColor = color.White
+	b.Text.Style.Color = color.Black
+	b.BorderColor = color.RGBA{79, 195, 247, 255}
 }
 
 func (g *Game) Update() error {
@@ -89,16 +101,17 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	if g.state != Start {
+	if g.state == Main {
 		g.level1.DrawCamera(screen, assets.SpriteSheet, g.cam, false)
 		for _, object := range g.enemies {
 			object.Draw(screen, g.cam)
 		}
 		g.player.Draw(screen, g.cam)
 		g.player.PhysicsEntity.Draw(screen, g.cam)
+		g.label.Text = fmt.Sprintf("Ammo:%d", g.player.Ammo)
+		g.label.Draw(screen)
 	}
-	//g.label.Text = fmt.Sprintf("Ammo:%d", g.player.Ammo)
-	//g.label.Draw(screen)
+
 	if g.state == Start {
 		g.uimanager.Draw(screen)
 	}

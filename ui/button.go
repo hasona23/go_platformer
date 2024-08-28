@@ -20,25 +20,30 @@ const (
 )
 
 type Button struct {
-	sprite *ebiten.Image
-	Text   Label
-	rect   components.Rect
+	sprite  *ebiten.Image
+	Text    Label
+	rect    components.Rect
+	OnClick func(b *Button)
+	OnHover func(b *Button)
 	ButtonStyle
 }
 
-func NewSpriteButton(sprite *ebiten.Image, text string, x, y, fontSize, scale int, fontFile []byte) *Button {
+func NewSpriteButton(sprite *ebiten.Image, text string, x, y, fontSize, scale int, fontFile []byte, textColor color.Color) *Button {
 
 	button := &Button{}
 	button.Text = *NewLabel(text, x, y, fontFile, fontSize, color.Black)
 	button.ButtonStyle.Color = color.Transparent
 	button.sprite = sprite
 	button.rect = components.NewRect(x, y, scale*sprite.Bounds().Dx(), scale*sprite.Bounds().Dy())
-
+	button.Text.Style.Color = textColor
+	button.defaultTextColor = textColor
+	button.OnClick = func(b *Button) {}
+	button.OnHover = func(b *Button) {}
 	return button
 }
 
 // normal square/rectangle button with border background color
-func NewButton(txt string, x, y, fontSize int, scale float64, fontFile []byte, backColor, bordercolor color.Color) *Button {
+func NewButton(txt string, x, y, fontSize int, scale float64, fontFile []byte, textColor, backColor, bordercolor color.Color) *Button {
 
 	button := &Button{}
 	button.Text = *NewLabel(txt, x, y, fontFile, fontSize, color.Black)
@@ -48,20 +53,28 @@ func NewButton(txt string, x, y, fontSize int, scale float64, fontFile []byte, b
 	button.ButtonStyle.BorderThickness = 1
 	button.ButtonStyle.Color = color.Transparent
 	button.ButtonStyle.BorderColor = bordercolor
-	button.ButtonStyle.BackGroundColor = backColor
-
+	button.ButtonStyle.BackColor = backColor
+	button.ButtonStyle.defaultBackColor = backColor
+	button.ButtonStyle.defaultBorderColor = bordercolor
+	button.Text.Style.Color = textColor
+	button.defaultTextColor = textColor
+	button.OnClick = func(b *Button) {}
+	button.OnHover = func(b *Button) {}
 	return button
 }
 
 // Button ButtonStyle is made Primarily for when there is no sprite or make effects for sprite
 type ButtonStyle struct {
-	X, Y            int
-	Color           color.Color
-	BorderColor     color.Color
-	BackGroundColor color.Color
-	Scale           float64
-	BorderThickness int
-	TextOrientation Orientation
+	X, Y               int
+	Color              color.Color
+	BorderColor        color.Color
+	BackColor          color.Color
+	defaultBackColor   color.Color
+	defaultBorderColor color.Color
+	defaultTextColor   color.Color
+	Scale              float64
+	BorderThickness    int
+	TextOrientation    Orientation
 }
 
 // Draw button
@@ -79,7 +92,7 @@ func (b *Button) drawButton(screen *ebiten.Image) {
 		op.ColorScale.ScaleWithColor(b.ButtonStyle.Color)
 		screen.DrawImage(b.sprite, op)
 	} else {
-		vector.DrawFilledRect(screen, float32(b.rect.X), float32(b.rect.Y), float32(b.rect.Width), float32(b.rect.Height), b.ButtonStyle.BackGroundColor, false)
+		vector.DrawFilledRect(screen, float32(b.rect.X), float32(b.rect.Y), float32(b.rect.Width), float32(b.rect.Height), b.ButtonStyle.BackColor, false)
 		vector.StrokeRect(screen, float32(b.rect.X), float32(b.rect.Y), float32((b.rect.Width + b.BorderThickness/2)), float32(b.rect.Height+b.BorderThickness/2),
 			float32(b.ButtonStyle.BorderThickness),
 			b.ButtonStyle.BorderColor, false)
@@ -127,7 +140,7 @@ func (b *Button) drawButtonCam(screen *ebiten.Image, cam components.Camera) {
 		op.ColorScale.ScaleWithColor(b.ButtonStyle.Color)
 		screen.DrawImage(b.sprite, op)
 	} else {
-		vector.DrawFilledRect(screen, float32(b.rect.X+cam.X), float32(b.rect.Y+cam.Y), float32(b.rect.Width), float32(b.rect.Height), b.ButtonStyle.BackGroundColor, false)
+		vector.DrawFilledRect(screen, float32(b.rect.X+cam.X), float32(b.rect.Y+cam.Y), float32(b.rect.Width), float32(b.rect.Height), b.ButtonStyle.BackColor, false)
 		vector.StrokeRect(screen, float32(b.rect.X+cam.X), float32(b.rect.Y+cam.Y), float32((b.rect.Width + b.BorderThickness/2)), float32(b.rect.Height+b.BorderThickness/2),
 			float32(b.ButtonStyle.BorderThickness),
 			b.ButtonStyle.BorderColor, false)
@@ -169,4 +182,10 @@ func (b *Button) IsHover() bool {
 // check if button is pressed by mouse
 func (b *Button) IsPressed() bool {
 	return (b.IsHover() && inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft))
+}
+func (b *Button) DefaultColor() {
+	b.ButtonStyle.Color = color.Transparent
+	b.ButtonStyle.BorderColor = b.ButtonStyle.defaultBorderColor
+	b.ButtonStyle.BackColor = b.ButtonStyle.defaultBackColor
+	b.Text.Style.Color = b.defaultTextColor
 }

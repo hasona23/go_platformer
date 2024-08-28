@@ -48,14 +48,26 @@ func (u *UIManager) updateHoveredButtons() {
 			u.focusedButton = slices.Index(u.buttons, b)
 		}
 		if b == u.buttons[u.focusedButton] {
+			b.OnHover(b)
+		} else {
+			b.DefaultColor()
 		}
 	}
 }
+
 func (u *UIManager) updatePressedButtons() {
+
 	for _, b := range u.buttons {
 		if b == u.buttons[u.focusedButton] && (b.IsPressed() || inpututil.IsKeyJustPressed(ebiten.KeyEnter)) {
-
+			b.OnClick(b)
 		}
+
+		if b == u.buttons[u.focusedButton] {
+			b.OnHover(b)
+		} else {
+			b.DefaultColor()
+		}
+
 	}
 }
 func (u *UIManager) Draw(screen *ebiten.Image) {
@@ -72,5 +84,10 @@ func (u *UIManager) DrawCam(screen *ebiten.Image, cam components.Camera) {
 	}
 	for _, label := range u.labels {
 		label.DrawCam(screen, cam)
+	}
+}
+func (u *UIManager) ApplyHoverToAllButtons(hoverEffect func(b *Button)) {
+	for i := range u.buttons {
+		u.buttons[i].OnHover = hoverEffect
 	}
 }
