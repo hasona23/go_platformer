@@ -9,6 +9,7 @@ import (
 	ui "go_platformer/ui"
 	"image/color"
 	"log"
+	"os"
 	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -20,14 +21,22 @@ const (
 	DisplayHeight = 240
 )
 
+// uiComponents
+const (
+	Start       = "start"
+	Save        = "save"
+	Exit        = "exit"
+	AmmoCounter = "ammo"
+)
+
 type Game struct {
-	cam       components.Camera
-	level1    *tilemap.Level
-	enemies   []*entities.Enemy
-	player    *entities.Player
-	label     *ui.Label
-	state     GameState
-	uimanager *ui.UIManager
+	cam      components.Camera
+	level1   *tilemap.Level
+	enemies  []*entities.Enemy
+	player   *entities.Player
+	state    GameState
+	mainmenu *ui.UILayout
+	gameUI   *ui.UILayout
 }
 
 func (g *Game) Init() {
@@ -41,29 +50,37 @@ func (g *Game) Init() {
 	if err != nil {
 		log.Fatal("Error Getting enemy objects :", err)
 	}
-	g.state = Start
+	g.state = MainMenu
 	g.player = entities.NewPlayer()
 
-	g.label = ui.NewLabel("Hello", 5, 5, assets.PixelFont, 16, color.Black)
-	button1 := ui.NewButton("start", 100, 100, 16, 2, assets.PixelFont, color.White, color.Black, color.White)
-	button2 := ui.NewButton("save", 100, 150, 16, 2, assets.PixelFont, color.White, color.Black, color.White)
-	button3 := ui.NewButton("quit", 100, 200, 16, 2, assets.PixelFont, color.White, color.Black, color.White)
-	g.uimanager = ui.NewUIManager()
-	g.uimanager.AddButton(button1)
-	g.uimanager.AddButton(button2)
-	g.uimanager.AddButton(button3)
-	g.uimanager.ApplyHoverToAllButtons(hover)
-	button1.OnClick = func(b *ui.Button) {
+	ammoUI := ui.NewLabel("Ammo:", 5, 5, assets.PixelFont, 16, color.Black)
+	g.gameUI = ui.NewUILayout("MainGameUI")
+	g.gameUI.AddLabel(AmmoCounter, ammoUI)
+	start := ui.NewButton("start", 100, 100, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
+	save := ui.NewButton("save", 100, 150, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
+	exit := ui.NewButton("quit", 100, 200, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
+	start.Style.BorderThickness = 3
+	save.Style.BorderThickness = 3
+	exit.Style.BorderThickness = 3
+	g.mainmenu = ui.NewUILayout("MainMenu")
+	g.mainmenu.AddButton(Start, start)
+	g.mainmenu.AddButton(Save, save)
+	g.mainmenu.AddButton(Exit, exit)
+	g.mainmenu.ApplyHoverToAllButtons(hover)
+	start.OnClick = func(b *ui.Button) {
 		if g.state != Main {
 			g.state = Main
 		}
 	}
+
+	exit.OnClick = func(b *ui.Button) {
+		os.Exit(0)
+	}
 }
 
 func hover(b *ui.Button) {
-	b.BackColor = color.White
 	b.Text.Style.Color = color.Black
-	b.BorderColor = color.RGBA{79, 195, 247, 255}
+	b.Style.BorderColor = color.White
 }
 
 func (g *Game) Update() error {
@@ -74,8 +91,8 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) && g.state == Pause {
 		g.state = Main
 	}
-	if g.state == Start {
-		g.uimanager.Update()
+	if g.state == MainMenu {
+		g.mainmenu.Update()
 	}
 	if g.state == Main {
 		if g.player.Died {
@@ -97,6 +114,7 @@ func (g *Game) Update() error {
 		g.player.Bullets = slices.DeleteFunc(g.player.Bullets, func(b *entities.Bullet) bool { return b.Dead })
 		g.enemies = slices.DeleteFunc(g.enemies, func(e *entities.Enemy) bool { return e.Dead })
 	}
+
 	return nil
 }
 
@@ -108,12 +126,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 		g.player.Draw(screen, g.cam)
 		g.player.PhysicsEntity.Draw(screen, g.cam)
-		g.label.Text = fmt.Sprintf("Ammo:%d", g.player.Ammo)
-		g.label.Draw(screen)
+		counter, _ := g.gameUI.GetLabel(AmmoCounter)
+		counter.Text = fmt.Sprintf("Ammo:%d", g.player.Ammo)
+		g.gameUI.Draw(screen)
 	}
 
-	if g.state == Start {
-		g.uimanager.Draw(screen)
+	if g.state == MainMenu {
+		screen.Fill(color.RGBA{255, 222, 206, 255})
+		g.mainmenu.Draw(screen)
+
 	}
 }
 

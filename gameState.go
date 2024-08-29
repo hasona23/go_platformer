@@ -3,7 +3,7 @@ package main
 type GameState int
 
 const (
-	Start = iota
+	MainMenu = iota
 	Main
 	Pause
 )
