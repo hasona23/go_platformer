@@ -69,20 +69,20 @@ func (g *Game) Init() {
 	g.mainmenu.AddButton(Save, save)
 	g.mainmenu.AddButton(Exit, exit)
 	g.mainmenu.ApplyHoverToAllButtons(hover)
-	start.OnClick = func(b *ui.Button) {
+	start.AddClickEvent(func(b *ui.Button) {
 		if g.state != Main {
 			g.state = Main
 		}
-	}
+	})
 
-	exit.OnClick = func(b *ui.Button) {
+	exit.AddClickEvent(func(b *ui.Button) {
 		os.Exit(0)
-	}
+	})
 
 	pauseText := ui.NewLabel("PAUSED!", DisplayWidth/2, DisplayHeight/2, assets.PixelFont, 32, color.White)
-	pauseText.CentreTextOrigin()
-	g.pauseUI = ui.NewUILayout("pause-layout")
-	g.pauseUI.AddLabel("pause", pauseText)
+	pauseText.CenterText()
+	g.pauseUI = ui.NewUILayout("pauseUI")
+	g.pauseUI.AddLabel("pauseText", pauseText)
 }
 
 func hover(b *ui.Button) {

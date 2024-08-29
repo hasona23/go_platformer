@@ -28,6 +28,9 @@ func (u *UILayout) GetID() string {
 }
 func (u *UILayout) AddButton(name string, button *Button) {
 	u.buttons[name] = button
+	if u.focusedButton == "" {
+		u.focusedButton = name
+	}
 }
 func (u *UILayout) AddLabel(name string, label *Label) {
 	u.labels[name] = label
@@ -123,9 +126,9 @@ func (u *UILayout) navigation() {
 func (u *UILayout) updateButtons() {
 	for _, b := range u.buttons {
 		if b == u.buttons[u.focusedButton] {
-			b.OnHover(b)
+			b.OnHover()
 			if b.IsPressed() || inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
-				b.OnClick(b)
+				b.OnClick()
 			}
 		} else {
 			b.DefaultColor()
@@ -150,6 +153,11 @@ func (u *UILayout) DrawCam(screen *ebiten.Image, cam components.Camera) {
 }
 func (u *UILayout) ApplyHoverToAllButtons(hoverEffect func(b *Button)) {
 	for i := range u.buttons {
-		u.buttons[i].OnHover = hoverEffect
+		u.buttons[i].AddHoverEvent(hoverEffect)
+	}
+}
+func (u *UILayout) ApplyClickToAllButtons(hoverEffect func(b *Button)) {
+	for i := range u.buttons {
+		u.buttons[i].AddClickEvent(hoverEffect)
 	}
 }

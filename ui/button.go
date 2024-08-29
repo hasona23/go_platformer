@@ -24,13 +24,14 @@ const (
 	TextBottomRightFactor  = 1.25
 )
 
+type Event func(b *Button)
 type Button struct {
-	sprite  *ebiten.Image
-	Text    Label
-	rect    components.Rect
-	OnClick func(b *Button)
-	OnHover func(b *Button)
-	Style   ButtonStyle
+	sprite      *ebiten.Image
+	Text        Label
+	rect        components.Rect
+	clickEvents []Event
+	hoverEvents []Event
+	Style       ButtonStyle
 }
 
 func NewSpriteButton(sprite *ebiten.Image, text string, x, y, fontSize, scale int, fontFile []byte, textColor color.Color) *Button {
@@ -44,8 +45,8 @@ func NewSpriteButton(sprite *ebiten.Image, text string, x, y, fontSize, scale in
 			Scale: float64(scale),
 			Color: color.Transparent,
 		},
-		OnClick: func(b *Button) {},
-		OnHover: func(b *Button) {},
+		clickEvents: []Event{},
+		hoverEvents: []Event{},
 	}
 	button.rect = components.NewRect(x, y, scale*sprite.Bounds().Dx(), scale*sprite.Bounds().Dy())
 	button.Style.defaultTextColor = textColor
@@ -64,8 +65,8 @@ func NewButton(txt string, x, y, fontSize int, scale float64, fontFile []byte, t
 			BorderThickness: DefaultBorderThickness,
 			Color:           color.Transparent,
 		},
-		OnClick: func(b *Button) {},
-		OnHover: func(b *Button) {},
+		clickEvents: []Event{},
+		hoverEvents: []Event{},
 	}
 	button.SetDefaultColors(textColor, backColor, bordercolor)
 	button.DefaultColor()
@@ -102,6 +103,24 @@ func (b *Button) IsHover() bool {
 // check if button is pressed by mouse
 func (b *Button) IsPressed() bool {
 	return (b.IsHover() && inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft))
+}
+func (b *Button) AddClickEvent(event func(b *Button)) {
+	b.clickEvents = append(b.clickEvents, event)
+}
+func (b *Button) AddHoverEvent(event func(b *Button)) {
+	b.hoverEvents = append(b.hoverEvents, event)
+}
+
+// calls all the click events
+func (b *Button) OnClick() {
+	for _, event := range b.clickEvents {
+		event(b)
+	}
+}
+func (b *Button) OnHover() {
+	for _, event := range b.hoverEvents {
+		event(b)
+	}
 }
 func (b *Button) DefaultColor() {
 	b.Style.Color = color.Transparent
@@ -180,4 +199,20 @@ func (b *Button) SetText(newText string) {
 func (b *Button) SetScale(scale float64) {
 	b.Style.Scale = scale
 	b.UpdateRect()
+}
+func (b *Button) RemoveClickEvent(event Event) {
+	for i, e := range b.clickEvents {
+		if &e == &event {
+			b.clickEvents = append(b.clickEvents[:i], b.clickEvents[i+1:]...)
+			break
+		}
+	}
+}
+func (b *Button) RemoveHoverEvent(event Event) {
+	for i, e := range b.hoverEvents {
+		if &e == &event {
+			b.hoverEvents = append(b.hoverEvents[:i], b.hoverEvents[i+1:]...)
+			break
+		}
+	}
 }
