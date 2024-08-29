@@ -16,9 +16,10 @@ type Label struct {
 	Style Style
 }
 type Style struct {
-	Font  *text.GoTextFaceSource
-	Size  int
-	Color color.Color
+	Font        *text.GoTextFaceSource
+	Size        int
+	Color       color.Color
+	LineSpacing uint32
 }
 
 func NewLabel(txt string, x, y int, fontFile []byte, size int, color color.Color) *Label {
@@ -32,6 +33,7 @@ func NewLabel(txt string, x, y int, fontFile []byte, size int, color color.Color
 	label.Style.Font = font
 	label.Style.Size = size
 	label.Style.Color = color
+	label.Style.LineSpacing = 1
 	return label
 }
 
@@ -39,6 +41,7 @@ func (l *Label) Draw(screen *ebiten.Image) {
 	op := &text.DrawOptions{}
 	op.GeoM.Translate(float64(l.Pos[0]), float64(l.Pos[1]))
 	op.ColorScale.ScaleWithColor(l.Style.Color)
+
 	text.Draw(screen, l.Text, &text.GoTextFace{Source: l.Style.Font, Size: float64(l.Style.Size)}, op)
 }
 func (l *Label) DrawCam(screen *ebiten.Image, cam components.Camera) {
@@ -46,4 +49,11 @@ func (l *Label) DrawCam(screen *ebiten.Image, cam components.Camera) {
 	op.GeoM.Translate(float64(l.Pos[0]+cam.X), float64(l.Pos[1])+float64(cam.Y))
 
 	text.Draw(screen, l.Text, &text.GoTextFace{Source: l.Style.Font, Size: float64(l.Style.Size)}, op)
+}
+func (l *Label) CentreTextOrigin() {
+	f := &text.GoTextFace{Source: l.Style.Font, Size: float64(l.Style.Size)}
+	w, h := text.Measure(l.Text, f, float64(l.Style.LineSpacing))
+	l.Pos[0] -= int(w / 2)
+	l.Pos[1] -= int(h / 2)
+
 }

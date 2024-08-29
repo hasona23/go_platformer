@@ -129,7 +129,7 @@ func (b *Button) Draw(screen *ebiten.Image) {
 }
 
 func (b *Button) DrawCam(screen *ebiten.Image, cam components.Camera) {
-	b.draw(screen, components.Point{X: cam.X, Y: cam.Y})
+	b.draw(screen, components.Point(cam))
 }
 
 func (b *Button) drawButtonWithOffset(screen *ebiten.Image, offset components.Point) {

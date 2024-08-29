@@ -14,6 +14,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 const (
@@ -37,6 +38,7 @@ type Game struct {
 	state    GameState
 	mainmenu *ui.UILayout
 	gameUI   *ui.UILayout
+	pauseUI  *ui.UILayout
 }
 
 func (g *Game) Init() {
@@ -53,12 +55,12 @@ func (g *Game) Init() {
 	g.state = MainMenu
 	g.player = entities.NewPlayer()
 
-	ammoUI := ui.NewLabel("Ammo:", 5, 5, assets.PixelFont, 16, color.Black)
+	ammoUI := ui.NewLabel("AMMO::", 5, 5, assets.PixelFont, 16, color.Black)
 	g.gameUI = ui.NewUILayout("MainGameUI")
 	g.gameUI.AddLabel(AmmoCounter, ammoUI)
-	start := ui.NewButton("start", 100, 100, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
-	save := ui.NewButton("save", 100, 150, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
-	exit := ui.NewButton("quit", 100, 200, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
+	start := ui.NewButton("START", 100, 100, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
+	save := ui.NewButton("SAVE", 100, 150, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
+	exit := ui.NewButton("QUIT", 100, 200, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
 	start.Style.BorderThickness = 3
 	save.Style.BorderThickness = 3
 	exit.Style.BorderThickness = 3
@@ -76,6 +78,11 @@ func (g *Game) Init() {
 	exit.OnClick = func(b *ui.Button) {
 		os.Exit(0)
 	}
+
+	pauseText := ui.NewLabel("PAUSED!", DisplayWidth/2, DisplayHeight/2, assets.PixelFont, 32, color.White)
+	pauseText.CentreTextOrigin()
+	g.pauseUI = ui.NewUILayout("pause-layout")
+	g.pauseUI.AddLabel("pause", pauseText)
 }
 
 func hover(b *ui.Button) {
@@ -86,7 +93,11 @@ func hover(b *ui.Button) {
 func (g *Game) Update() error {
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		g.state = Pause
+		if g.state == Main {
+			g.state = Pause
+		} else if g.state == Pause {
+			g.state = Main
+		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) && g.state == Pause {
 		g.state = Main
@@ -119,7 +130,7 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	if g.state == Main {
+	if g.state != MainMenu {
 		g.level1.DrawCamera(screen, assets.SpriteSheet, g.cam, false)
 		for _, object := range g.enemies {
 			object.Draw(screen, g.cam)
@@ -130,7 +141,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		counter.Text = fmt.Sprintf("Ammo:%d", g.player.Ammo)
 		g.gameUI.Draw(screen)
 	}
-
+	if g.state == Pause {
+		vector.DrawFilledRect(screen, 0, 0, DisplayWidth, DisplayHeight, color.RGBA{60, 60, 60, 100}, false)
+		g.pauseUI.Draw(screen)
+	}
 	if g.state == MainMenu {
 		screen.Fill(color.RGBA{255, 222, 206, 255})
 		g.mainmenu.Draw(screen)
