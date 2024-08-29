@@ -109,6 +109,7 @@ func (g *Game) Update() error {
 		if g.player.Died {
 			g.enemies = []*entities.Enemy{}
 			g.Init()
+			g.state = Main
 		}
 
 		tilesCollisionMap := g.level1.GetCollisionTilesMap()

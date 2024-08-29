@@ -1,6 +1,8 @@
 package components
 
-import "math"
+import (
+	"math"
+)
 
 type Camera struct {
 	X, Y int
@@ -12,6 +14,23 @@ func NewCamera(x, y int) *Camera {
 		Y: y,
 	}
 }
+
+// ShakeAmount is how many times you want the shaking to occur
+/*func (c *Camera) Shake(strengh float32, ShakeAmount int) {
+	//factors is between  -1 , 1 to maniplutate direction of x and y displacement
+	factor := 0
+	for range ShakeAmount {
+		if rand.Int()%2 == 0 {
+			factor = 1
+		} else {
+			factor = -1
+		}
+		x := rand.Float32() * strengh * float32(factor)
+		y := rand.Float32() * strengh * float32(factor)
+		c.X += int(x)
+		c.Y += int(y)
+	}
+}*/
 
 // For Smooth Movement
 func (c *Camera) FollowTarget(targetX, targetY, screenWidth, screenHeight, speed int) {
