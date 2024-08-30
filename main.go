@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"go_platformer/assets"
 	"go_platformer/components"
 	"go_platformer/entities"
 	"go_platformer/tilemap"
 	ui "go_platformer/ui"
+	"image"
 	"image/color"
 	"log"
 	"os"
@@ -55,9 +55,12 @@ func (g *Game) Init() {
 	g.state = MainMenu
 	g.player = entities.NewPlayer()
 
-	ammoUI := ui.NewLabel("AMMO::", 5, 5, assets.PixelFont, 16, color.Black)
+	ammoBar := ui.NewSpriteBar(assets.SpriteSheet.SubImage(image.Rect(3, 5*16+3, 14, 6*16-2)).(*ebiten.Image),
+		10, 10, g.player.Ammo,
+		components.Point{X: 5, Y: 5})
+
 	g.gameUI = ui.NewUILayout("MainGameUI")
-	g.gameUI.AddLabel(AmmoCounter, ammoUI)
+	g.gameUI.AddBar("ammo", ammoBar)
 	start := ui.NewButton("START", 100, 100, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
 	save := ui.NewButton("SAVE", 100, 150, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
 	exit := ui.NewButton("QUIT", 100, 200, 16, 2, assets.PixelFont, color.White, color.RGBA{255, 222, 206, 255}, color.White)
@@ -111,7 +114,8 @@ func (g *Game) Update() error {
 			g.Init()
 			g.state = Main
 		}
-
+		bar, _ := g.gameUI.GetBar("ammo")
+		bar.SetValue(g.player.Ammo)
 		tilesCollisionMap := g.level1.GetCollisionTilesMap()
 		g.player.Update(tilesCollisionMap)
 		g.player.UpdateBullets(tilesCollisionMap, g.enemies)
@@ -138,8 +142,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 		g.player.Draw(screen, g.cam)
 		g.player.PhysicsEntity.Draw(screen, g.cam)
-		counter, _ := g.gameUI.GetLabel(AmmoCounter)
-		counter.Text = fmt.Sprintf("Ammo:%d", g.player.Ammo)
 		g.gameUI.Draw(screen)
 	}
 	if g.state == Pause {

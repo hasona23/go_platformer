@@ -31,7 +31,6 @@ func (e PhysicsEntity) Draw(screen *ebiten.Image, camera components.Camera) {
 		e.Anim.FlipHorizontal(op)
 	}
 	op.GeoM.Translate(float64(e.Pos.Pos[0]+camera.X), float64(e.Pos.Pos[1]+camera.Y))
-
 	screen.DrawImage(e.Anim.Img, op)
 	// vector.StrokeRect(screen, float32(e.Collider().X+camera.X), float32(e.Collider().Y+camera.Y),
 	// float32(e.Collider().Width), float32(e.Collider().Height), 2, color.Black, false)
