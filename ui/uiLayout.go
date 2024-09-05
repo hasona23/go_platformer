@@ -102,8 +102,8 @@ func (u *UILayout) Clear() {
 	u.bars = make(map[string]*Bar)
 	u.focusedButton = ""
 }
-func (u *UILayout) GetFocusedButton() (*Button, bool) {
-	return u.GetButton(u.focusedButton)
+func (u *UILayout) GetFocusedButton() string {
+	return u.focusedButton
 }
 
 // checks for buttons hover/pressing and calls actions responding to this

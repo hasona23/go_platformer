@@ -3,6 +3,7 @@ package ui
 import (
 	"go_platformer/components"
 	"image/color"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -122,6 +123,12 @@ func (b *Button) OnHover() {
 		event(b)
 	}
 }
+func (b *Button) Centre() {
+	b.UpdateRect()
+	b.Style.X -= b.rect.Width / 2
+	b.Style.Y -= b.rect.Height / 2
+}
+
 func (b *Button) DefaultColor() {
 	b.Style.Color = color.Transparent
 	b.Style.BorderColor = b.Style.defaultBorderColor
@@ -154,12 +161,12 @@ func (b *Button) DrawCam(screen *ebiten.Image, cam components.Camera) {
 func (b *Button) drawButtonWithOffset(screen *ebiten.Image, offset components.Point) {
 	if b.sprite != nil {
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(float64(b.rect.X+offset.X), float64(b.rect.Y+offset.Y))
+		op.GeoM.Translate(math.Round(float64(b.rect.X/int(b.Style.Scale)+offset.X)), math.Round(float64(b.rect.X/int(b.Style.Scale)+offset.X)))
 		op.GeoM.Scale(float64(b.Style.Scale), float64(b.Style.Scale))
-		op.ColorScale.ScaleWithColor(b.Style.Color)
+		//op.ColorScale.ScaleWithColor(b.Style.Color)
 		screen.DrawImage(b.sprite, op)
 	} else {
-		vector.DrawFilledRect(screen, float32(b.rect.X+offset.X), float32(b.rect.Y+offset.Y), float32(b.rect.Width), float32(b.rect.Height), b.Style.BackColor, false)
+		vector.DrawFilledRect(screen, float32(math.Round(float64(b.rect.X/int(b.Style.Scale)+offset.X))), float32(math.Round(float64(b.rect.X/int(b.Style.Scale)+offset.X))), float32(b.rect.Width), float32(b.rect.Height), b.Style.BackColor, false)
 		vector.StrokeRect(screen, float32(b.rect.X+offset.X), float32(b.rect.Y+offset.Y), float32((b.rect.Width + b.Style.BorderThickness/2)),
 			float32(b.rect.Height+b.Style.BorderThickness/2),
 			float32(b.Style.BorderThickness),

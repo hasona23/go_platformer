@@ -19,20 +19,20 @@ func (sprite Sprite) GetHeight() int {
 func (sprite Sprite) FlipHorizontal(op *ebiten.DrawImageOptions) {
 	s := sprite.Img.Bounds()
 	op.GeoM.Scale(-1, 1)
-	//op.GeoM.Translate(float64(s.Bounds().Dx())/2, 0)
 	op.GeoM.Translate(float64(s.Dx()), 0)
 
 }
 func (sprite Sprite) FlipVertical(op *ebiten.DrawImageOptions) {
 	s := sprite.Img.Bounds()
 	op.GeoM.Scale(1, -1)
-	//op.GeoM.Translate(float64(s.Bounds().Dx())/2, 0)
 	op.GeoM.Translate(0, float64(s.Dy()))
 
 }
+
+// angle in radians
 func (sprite *Sprite) Rotate(op *ebiten.DrawImageOptions, angle float64) {
 	s := sprite.Img.Bounds()
 	op.GeoM.Translate(-float64(s.Dx())/2, -float64(s.Dy())/2)
 	op.GeoM.Rotate(angle)
-	op.GeoM.Translate(float64(s.Dx())/2, float64(s.Dy())/2)
+	//op.GeoM.Translate(float64(s.Dx())/2, float64(s.Dy())/2)
 }

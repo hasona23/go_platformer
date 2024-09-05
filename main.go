@@ -4,6 +4,7 @@ import (
 	"go_platformer/assets"
 	"go_platformer/components"
 	"go_platformer/entities"
+	"go_platformer/particles"
 	"go_platformer/tilemap"
 	ui "go_platformer/ui"
 	"image"
@@ -15,6 +16,14 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+)
+
+type GameState int
+
+const (
+	MainMenu GameState = iota
+	Main
+	Pause
 )
 
 const (
@@ -31,14 +40,15 @@ const (
 )
 
 type Game struct {
-	cam      components.Camera
-	level1   *tilemap.Level
-	enemies  []*entities.Enemy
-	player   *entities.Player
-	state    GameState
-	mainmenu *ui.UILayout
-	gameUI   *ui.UILayout
-	pauseUI  *ui.UILayout
+	cam       components.Camera
+	level1    *tilemap.Level
+	enemies   []*entities.Enemy
+	player    *entities.Player
+	state     GameState
+	mainmenu  *ui.UILayout
+	gameUI    *ui.UILayout
+	pauseUI   *ui.UILayout
+	particles *particles.ParticleSystem
 }
 
 func (g *Game) Init() {
@@ -86,6 +96,22 @@ func (g *Game) Init() {
 	pauseText.CenterText()
 	g.pauseUI = ui.NewUILayout("pauseUI")
 	g.pauseUI.AddLabel("pauseText", pauseText)
+	returnButton := ui.NewButton("Back to Menu", 160, 175, 16, 2, assets.PixelFont, color.White, color.Transparent, color.White)
+	returnButton.Style.TextOrientation = ui.Middle
+
+	returnButton.AddHoverEvent(hover)
+	returnButton.AddClickEvent(func(b *ui.Button) {
+		g.state = MainMenu
+	})
+	returnButton.Centre()
+	g.pauseUI.AddButton("tomenuButton", returnButton)
+	g.particles = particles.NewParticleSystem(0, 0, g.level1.GetSizeInPixels()[0], g.level1.GetSizeInPixels()[1], 10, particles.RandomDirections,
+		*particles.NewParticle(0, 0, particles.WithColor(color.RGBA{180, 211, 75, 255}), particles.WithScale(4), particles.WithSpeed(0.2)))
+	g.particles.Decelration = 0.001
+	g.particles.ParticleSpawnCount = 10
+	g.particles.SpawnTime = components.NewTimer(60)
+	g.particles.IsLooped = true
+
 }
 
 func hover(b *ui.Button) {
@@ -94,7 +120,12 @@ func hover(b *ui.Button) {
 }
 
 func (g *Game) Update() error {
+	if g.state == Pause {
+		g.pauseUI.Update()
+	} else if g.state == MainMenu {
+		g.mainmenu.Update()
 
+	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		if g.state == Main {
 			g.state = Pause
@@ -102,13 +133,11 @@ func (g *Game) Update() error {
 			g.state = Main
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) && g.state == Pause {
-		g.state = Main
-	}
-	if g.state == MainMenu {
-		g.mainmenu.Update()
-	}
+
 	if g.state == Main {
+		if b, _ := g.mainmenu.GetButton(Start); b.IsPressed() {
+			return nil
+		}
 		if g.player.Died {
 			g.enemies = []*entities.Enemy{}
 			g.Init()
@@ -127,8 +156,8 @@ func (g *Game) Update() error {
 			}
 		}
 
-		g.player.Bullets = slices.DeleteFunc(g.player.Bullets, func(b *entities.Bullet) bool { return b.Dead })
 		g.enemies = slices.DeleteFunc(g.enemies, func(e *entities.Enemy) bool { return e.Dead })
+		g.particles.Update()
 	}
 
 	return nil
@@ -143,6 +172,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.player.Draw(screen, g.cam)
 		g.player.PhysicsEntity.Draw(screen, g.cam)
 		g.gameUI.Draw(screen)
+		g.particles.DrawCam(screen, g.cam)
 	}
 	if g.state == Pause {
 		vector.DrawFilledRect(screen, 0, 0, DisplayWidth, DisplayHeight, color.RGBA{60, 60, 60, 100}, false)

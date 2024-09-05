@@ -28,9 +28,7 @@ func (timer *Timer) Reset() {
 }
 func (timer *Timer) UpdateTimerTPS() {
 	timer.current_time += 1 / ebiten.ActualTPS()
-	//fmt.Println(ebiten.ActualTPS())
 }
 func (timer *Timer) UpdateTimer() {
 	timer.current_time += 1
-	//fmt.Println(ebiten.ActualTPS())
 }

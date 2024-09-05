@@ -3,6 +3,7 @@ package components
 import (
 	"errors"
 	"image"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -38,10 +39,11 @@ func (sprite AnimSprite) FlipVertical(op *ebiten.DrawImageOptions) {
 
 }
 
+// angle in deg
 func (sprite *AnimSprite) Rotate(op *ebiten.DrawImageOptions, angle float64) {
 	s := sprite.Img.Bounds()
 	op.GeoM.Translate(-float64(s.Dx())/2, -float64(s.Dy())/2)
-	op.GeoM.Rotate(angle)
+	op.GeoM.Rotate(angle * math.Pi / 180)
 	op.GeoM.Translate(float64(s.Dx())/2, float64(s.Dy())/2)
 }
 

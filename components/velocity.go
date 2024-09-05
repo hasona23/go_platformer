@@ -18,6 +18,12 @@ func (v *Vel) NormalizeDir() {
 		v.Dir[1] *= factor
 	}
 }
-func (v Vel) Init(speed float32) Vel {
-	return Vel{[2]float32{0, 0}, speed}
+
+// returns the x velocity
+func (v Vel) VelX() float32 {
+	return v.Speed * v.Dir[0]
+}
+
+func (v Vel) VelY() float32 {
+	return v.Speed * v.Dir[1]
 }

@@ -35,3 +35,6 @@ func (r Rect) Collide(other Rect) bool {
 		r.Y < other.Bottom() &&
 		other.Y < r.Bottom()
 }
+func (r Rect) Centre() (int, int) {
+	return r.X + r.Width/2, r.Y + r.Height/2
+}

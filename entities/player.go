@@ -3,7 +3,10 @@ package entities
 import (
 	"go_platformer/assets"
 	"go_platformer/components"
+	"go_platformer/particles"
 	"image"
+	"image/color"
+	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -17,6 +20,8 @@ type Player struct {
 	Died          bool
 	isJumping     bool
 	isShooting    bool
+	//	shootParticles  *particles.ParticleSystem
+	bulletParticles *particles.ParticleSystem
 }
 
 func NewPlayer() *Player {
@@ -30,6 +35,14 @@ func NewPlayer() *Player {
 	player.isShooting = false
 	player.Ammo = 10
 	player.shootingTimer = components.NewTimer(.3)
+	color := color.RGBA{255, 186, 57, 255}
+	//	player.shootParticles = particles.NewParticleSystem(player.Pos.Pos[0], player.Pos.Pos[1], 4, 4, 0, particles.Outward,
+	//		*particles.NewParticle(0, 0, particles.WithScale(4), particles.WithSpeed(0), particles.WithColor(color)))
+	//	player.shootParticles.Decelration = 0.4
+	player.bulletParticles = particles.NewParticleSystem(player.Pos.Pos[0], player.Pos.Pos[1], 4, 4, 0, particles.Outward,
+		*particles.NewParticle(0, 0, particles.WithColor(color), particles.WithScale(4), particles.WithSpeed(3)))
+	player.bulletParticles.Decelration = 0.2
+
 	return player
 }
 func Lerp(a, b, t float32) float32 {
@@ -69,6 +82,10 @@ func (p *Player) Update(tiles map[[2]int]components.Rect) {
 	}
 	p.PhysicsEntity.Move(tiles)
 	p.shoot()
+	//p.shootParticles.Update()
+	p.bulletParticles.Update()
+	p.Bullets = slices.DeleteFunc(p.Bullets, func(b *Bullet) bool { return b.Dead })
+
 }
 func (p Player) Draw(screen *ebiten.Image, cam components.Camera) {
 	for _, b := range p.Bullets {
@@ -88,6 +105,8 @@ func (p Player) Draw(screen *ebiten.Image, cam components.Camera) {
 		screen.DrawImage(assets.SpriteSheet.SubImage(image.Rect(3*16, 4*16, 4*16, 5*16)).(*ebiten.Image), op)
 	}
 	p.PhysicsEntity.Draw(screen, cam)
+	//p.shootParticles.DrawCam(screen, cam)
+	p.bulletParticles.DrawCam(screen, cam)
 
 }
 func (p *Player) shoot() {
@@ -99,11 +118,15 @@ func (p *Player) shoot() {
 		p.isShooting = true
 		p.Anim.ChangeAnim("shoot")
 		bSpeed := 0
+		//	p.shootParticles.Area.Y = int(p.Pos.Pos[1]) + 2
 		if p.Anim.Flip {
 			bSpeed = -5
+			//		p.shootParticles.Area.X = p.Pos.Pos[0] - 16
 		} else {
+			//		p.shootParticles.Area.X = p.Pos.Pos[0] + 16
 			bSpeed = 5
 		}
+		//	p.shootParticles.Spawn(10)
 		p.Bullets = append(p.Bullets, NewBullet(p.Pos.Pos[0], p.Pos.Pos[1], bSpeed))
 		p.Ammo--
 	}
@@ -116,7 +139,12 @@ func (p *Player) shoot() {
 
 }
 func (p *Player) UpdateBullets(tiles map[[2]int]components.Rect, enemies []*Enemy) {
-	for i := range p.Bullets {
+	for i, b := range p.Bullets {
 		p.Bullets[i].Update(tiles, enemies)
+		if b.Dead {
+			p.bulletParticles.Area.X = b.Collider().X + b.Collider().Width
+			p.bulletParticles.Area.Y = b.Collider().Y + b.Collider().Height/2
+			p.bulletParticles.Spawn(10)
+		}
 	}
 }
