@@ -1,56 +1,33 @@
-package components
+package spark
 
 import (
-	"errors"
 	"image"
-	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type AnimSprite struct {
-	Atlas         *ebiten.Image
-	Img           *ebiten.Image
+	Sprite
+	SpriteSheet   *ebiten.Image
 	width, height int
-	Animations    map[string]AnimationFrame
+	Animations    map[string]AnimationFrame //animations
 	Current       AnimationFrame
-	Flip          bool
 }
 
+// return an animasprite
+func NewAnimeSprite(img *ebiten.Image, Width, Height int) *AnimSprite {
+	return &AnimSprite{Sprite: *NewSprite(ebiten.NewImage(16, 16)), SpriteSheet: img, width: Width, height: Height, Animations: make(map[string]AnimationFrame)}
+}
 func (sprite AnimSprite) GetWidth() int {
-	return sprite.Img.Bounds().Dx()
+	return sprite.Sprite.GetWidth()
 }
 func (sprite AnimSprite) GetHeight() int {
-	return sprite.Img.Bounds().Dy()
+	return sprite.Sprite.GetHeight()
 }
 
-func (sprite AnimSprite) FlipHorizontal(op *ebiten.DrawImageOptions) {
-	s := sprite.Img.Bounds()
-	op.GeoM.Scale(-1, 1)
-	//op.GeoM.Translate(float64(s.Bounds().Dx())/2, 0)
-	op.GeoM.Translate(float64(s.Dx()), 0)
-
+func (a AnimSprite) SetSpriteOP(op *ebiten.DrawImageOptions, rotation float32) {
+	a.Sprite.SetSpriteOP(op, rotation)
 }
-func (sprite AnimSprite) FlipVertical(op *ebiten.DrawImageOptions) {
-	s := sprite.Img.Bounds()
-	op.GeoM.Scale(1, -1)
-	//op.GeoM.Translate(float64(s.Bounds().Dx())/2, 0)
-	op.GeoM.Translate(0, float64(s.Dy()))
-
-}
-
-// angle in deg
-func (sprite *AnimSprite) Rotate(op *ebiten.DrawImageOptions, angle float64) {
-	s := sprite.Img.Bounds()
-	op.GeoM.Translate(-float64(s.Dx())/2, -float64(s.Dy())/2)
-	op.GeoM.Rotate(angle * math.Pi / 180)
-	op.GeoM.Translate(float64(s.Dx())/2, float64(s.Dy())/2)
-}
-
-func NewAnimeSprite(img *ebiten.Image, Width, Height int) AnimSprite {
-	return AnimSprite{Atlas: img, Img: ebiten.NewImage(Width, Height), width: Width, height: Height, Animations: make(map[string]AnimationFrame)}
-}
-
 func (a *AnimSprite) Add(animtion AnimationFrame) {
 	if len(a.Animations) == 0 {
 		a.Animations[animtion.Name] = animtion
@@ -61,30 +38,25 @@ func (a *AnimSprite) Add(animtion AnimationFrame) {
 
 }
 
-func (a *AnimSprite) playAnim() error {
-	var err error = nil
+func (a *AnimSprite) playAnim() {
 	if _, ok := a.Animations[a.Current.Name]; ok {
 		a.Current.Update()
 	} else {
-		err = errors.New("there is no animation with this name")
-		return err
+		panic("AnimeSprite : no animation with name: " + a.Current.Name)
 	}
-	a.Img = a.Atlas.SubImage(image.Rect(a.Current.row_current*a.width,
+	a.Sprite.Img = a.SpriteSheet.SubImage(image.Rect(a.Current.row_current*a.width,
 		a.Current.col_current*a.height,
 		(a.Current.row_current+1)*a.width,
 		(a.Current.col_current+1)*a.height,
 	)).(*ebiten.Image)
-
-	return nil
 }
 func (a *AnimSprite) ChangeAnim(name string) {
 	if a.Current.Name != name {
 		a.Current = a.Animations[name]
 	}
 }
-func (a *AnimSprite) Update() error {
-	err := a.playAnim()
-	return err
+func (a *AnimSprite) Animate() {
+	a.playAnim()
 }
 
 // AnimeSprite Consist of many animation Frames to Player
@@ -104,7 +76,7 @@ func (a AnimationFrame) IsEmpty() bool {
 	return AnimationFrame{} != a
 }
 
-func NewAnimationFrame(row_min, row_max, col_min, col_max int, duration float64, name string) AnimationFrame {
+func NewAnimationFrame(row_min, row_max, col_min, col_max int, duration float32, name string) AnimationFrame {
 	return AnimationFrame{row_min: row_min, row_max: row_max, row_current: row_min, col_min: col_min, col_max: col_max, col_current: col_min, IsEnd: false, Name: name, Timer: NewTimer(duration)}
 }
 

@@ -2,9 +2,10 @@ package ui
 
 import (
 	"bytes"
-	"go_platformer/components"
 	"image/color"
 	"log"
+
+	"go_platformer/spark"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -12,7 +13,7 @@ import (
 
 type Label struct {
 	Text  string
-	Pos   [2]int
+	Pos   spark.Vec2
 	Style Style
 }
 type Style struct {
@@ -22,7 +23,7 @@ type Style struct {
 	LineSpacing uint32
 }
 
-func NewLabel(txt string, x, y int, fontFile []byte, size int, color color.Color) *Label {
+func NewLabel(txt string, x, y float32, fontFile []byte, size int, color color.Color) *Label {
 	font, err := text.NewGoTextFaceSource(bytes.NewReader(fontFile))
 	if err != nil {
 		log.Fatalf("Error loading font file %v", err)
@@ -30,7 +31,7 @@ func NewLabel(txt string, x, y int, fontFile []byte, size int, color color.Color
 
 	return &Label{
 		Text:  txt,
-		Pos:   [2]int{x, y},
+		Pos:   spark.Vec2{x, y},
 		Style: NewStyle(font, size, color),
 	}
 }
@@ -51,14 +52,14 @@ func (l *Label) SetText(txt string) {
 func (l *Label) SetStyle(style Style) {
 	l.Style = style
 }
-func (l *Label) SetPosition(x, y int) {
-	l.Pos = [2]int{x, y}
+func (l *Label) SetPosition(x, y float32) {
+	l.Pos = spark.Vec2{x, y}
 }
 func (l *Label) GetText() string {
 	return l.Text
 }
 
-func (l *Label) GetPosition() [2]int {
+func (l *Label) GetPosition() spark.Vec2 {
 	return l.Pos
 }
 
@@ -71,7 +72,7 @@ func (l *Label) Draw(screen *ebiten.Image) {
 	op.ColorScale.ScaleWithColor(l.Style.Color)
 	text.Draw(screen, l.Text, l.Style.Face(), op)
 }
-func (l *Label) DrawCam(screen *ebiten.Image, cam components.Camera) {
+func (l *Label) DrawCam(screen *ebiten.Image, cam spark.Cam) {
 	op := &text.DrawOptions{}
 	op.GeoM.Translate(float64(l.Pos[0]+cam.X), float64(l.Pos[1])+float64(cam.Y))
 	op.ColorScale.ScaleWithColor(l.Style.Color)
@@ -79,8 +80,8 @@ func (l *Label) DrawCam(screen *ebiten.Image, cam components.Camera) {
 }
 func (l *Label) CenterText() {
 	w, h := l.GetDimensions()
-	l.Pos[0] -= int(w / 2)
-	l.Pos[1] -= int(h / 2)
+	l.Pos[0] -= float32(w / 2)
+	l.Pos[1] -= float32(h / 2)
 }
 func (l *Label) GetDimensions() (width, height int) {
 	f := l.Style.Face()
@@ -90,22 +91,22 @@ func (l *Label) GetDimensions() (width, height int) {
 func (l *Label) SetColor(c color.Color) {
 	l.Style.Color = c
 }
-func (l *Label) GetBounds() (x, y, width, height int) {
+func (l *Label) GetBounds() (x, y float32, width, height int) {
 	width, height = l.GetDimensions()
 	return l.Pos[0], l.Pos[1], width, height
 }
 func (l *Label) SetFontSize(size int) {
 	l.Style.Size = size
 }
-func (l *Label) Move(dx, dy int) {
+func (l *Label) Move(dx, dy float32) {
 	l.Pos[0] += dx
 	l.Pos[1] += dy
 }
 
-func (l *Label) MoveX(dx int) {
+func (l *Label) MoveX(dx float32) {
 	l.Pos[0] += dx
 }
 
-func (l *Label) MoveY(dy int) {
+func (l *Label) MoveY(dy float32) {
 	l.Pos[1] += dy
 }

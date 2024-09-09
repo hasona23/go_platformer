@@ -1,19 +1,22 @@
 package main
 
 import (
+	"fmt"
 	"go_platformer/assets"
-	"go_platformer/components"
 	"go_platformer/entities"
-	"go_platformer/particles"
-	"go_platformer/tilemap"
-	ui "go_platformer/ui"
+	"go_platformer/spark/particles"
+	"go_platformer/spark/tilemap"
+	"go_platformer/spark/ui"
 	"image"
 	"image/color"
 	"log"
 	"os"
 	"slices"
 
+	"go_platformer/spark"
+
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
@@ -31,7 +34,7 @@ const (
 	DisplayHeight = 240
 )
 
-// uiComponents
+// uispark
 const (
 	Start       = "start"
 	Save        = "save"
@@ -40,8 +43,8 @@ const (
 )
 
 type Game struct {
-	cam       components.Camera
-	level1    *tilemap.Level
+	cam       spark.Cam
+	levels    map[string]*tilemap.Level
 	enemies   []*entities.Enemy
 	player    *entities.Player
 	state     GameState
@@ -53,11 +56,12 @@ type Game struct {
 
 func (g *Game) Init() {
 	var err error
-	g.level1 = tilemap.NewLevel(assets.Level1Map)
-	g.cam = *components.NewCamera(0, 0)
-	enemyObjects, err := g.level1.GetObjectsByName("Enemies")
+
+	g.levels["level1"] = tilemap.NewLevel(assets.Level1Map)
+	g.cam = *spark.NewCamera(0, 0)
+	enemyObjects, err := g.levels["level1"].GetObjectsByName("Enemies")
 	for _, i := range enemyObjects {
-		g.enemies = append(g.enemies, entities.NewEnemy(int(i.X), int(i.Y)))
+		g.enemies = append(g.enemies, entities.NewEnemy((i.X), (i.Y)))
 	}
 	if err != nil {
 		log.Fatal("Error Getting enemy objects :", err)
@@ -67,7 +71,7 @@ func (g *Game) Init() {
 
 	ammoBar := ui.NewSpriteBar(assets.SpriteSheet.SubImage(image.Rect(3, 5*16+3, 14, 6*16-2)).(*ebiten.Image),
 		10, 10, g.player.Ammo,
-		components.Point{X: 5, Y: 5})
+		spark.Point{X: 5, Y: 5})
 
 	g.gameUI = ui.NewUILayout("MainGameUI")
 	g.gameUI.AddBar("ammo", ammoBar)
@@ -105,13 +109,15 @@ func (g *Game) Init() {
 	})
 	returnButton.Centre()
 	g.pauseUI.AddButton("tomenuButton", returnButton)
-	g.particles = particles.NewParticleSystem(0, 0, g.level1.GetSizeInPixels()[0], g.level1.GetSizeInPixels()[1], 10, particles.RandomDirections,
-		*particles.NewParticle(0, 0, particles.WithColor(color.RGBA{180, 211, 75, 255}), particles.WithScale(4), particles.WithSpeed(0.2)))
-	g.particles.Decelration = 0.001
-	g.particles.ParticleSpawnCount = 10
-	g.particles.SpawnTime = components.NewTimer(60)
-	g.particles.IsLooped = true
-
+	g.particles = particles.NewParticleSystem(particles.WithArea(spark.NewRect(0, 0, g.levels["level1"].GetSizeInPixels()[0], g.levels["level1"].GetSizeInPixels()[1])),
+		particles.WithSpawnRate(1), particles.WithMotionType(particles.RandomDirections),
+		particles.WithModelParticle(*particles.NewParticle(particles.WithColor(color.RGBA{180, 211, 75, 255}), particles.WithScale(4),
+			particles.WithSpeed(0.2))),
+		particles.WithShrinking(0.025),
+		particles.WithGravity(0.1),
+		particles.WithParticleSpawnCount(10),
+		particles.WithLooping(),
+	)
 }
 
 func hover(b *ui.Button) {
@@ -143,13 +149,28 @@ func (g *Game) Update() error {
 			g.Init()
 			g.state = Main
 		}
+		if g.player.Pos[1] >= float32(g.levels["level1"].GetSizeInPixels()[1]) {
+			g.player.Died = true
+		}
 		bar, _ := g.gameUI.GetBar("ammo")
 		bar.SetValue(g.player.Ammo)
-		tilesCollisionMap := g.level1.GetCollisionTilesMap()
+		tilesCollisionMap := g.levels["level1"].GetCollisionTilesMap()
 		g.player.Update(tilesCollisionMap)
 		g.player.UpdateBullets(tilesCollisionMap, g.enemies)
-		g.cam.FollowTarget(g.player.Pos.Pos[0], g.player.Pos.Pos[1], DisplayWidth, DisplayHeight, 30)
-		g.cam.Constrain(g.level1.GetSizeInPixels()[0], g.level1.GetSizeInPixels()[1], DisplayWidth, DisplayHeight)
+		g.cam.FollowTarget(g.player.Pos[0], g.player.Pos[1], DisplayWidth, DisplayHeight, 30)
+		/*if ebiten.IsKeyPressed(ebiten.KeyL) {
+			g.cam.X += 1
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyH) {
+			g.cam.X -= 1
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyJ) {
+			g.cam.Y -= 1
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyK) {
+			g.cam.Y += 1
+		}*/
+		g.cam.Constrain(g.levels["level1"].GetSizeInPixels()[0], g.levels["level1"].GetSizeInPixels()[1], DisplayWidth, DisplayHeight)
 		for _, i := range g.enemies {
 			if !i.Dead {
 				i.Update(tilesCollisionMap, g.player)
@@ -158,14 +179,16 @@ func (g *Game) Update() error {
 
 		g.enemies = slices.DeleteFunc(g.enemies, func(e *entities.Enemy) bool { return e.Dead })
 		g.particles.Update()
+
 	}
 
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+
 	if g.state != MainMenu {
-		g.level1.DrawCamera(screen, assets.SpriteSheet, g.cam, false)
+		g.levels["level1"].DrawCamera(screen, assets.SpriteSheet, g.cam, false)
 		for _, object := range g.enemies {
 			object.Draw(screen, g.cam)
 		}
@@ -183,6 +206,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.mainmenu.Draw(screen)
 
 	}
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS:%.4v", ebiten.ActualFPS()))
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS:%.4v", ebiten.ActualTPS()), 0, 20)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -193,7 +218,6 @@ func main() {
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("GoPlatformer")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
-
 	assets.InitAssets()
 	g := &Game{}
 	g.Init()

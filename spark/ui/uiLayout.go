@@ -1,8 +1,9 @@
 package ui
 
 import (
-	"go_platformer/components"
 	"slices"
+
+	"go_platformer/spark"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -27,6 +28,7 @@ func NewUILayout(id string) *UILayout {
 
 func (u *UILayout) GetID() string {
 	return u.id
+
 }
 func (u *UILayout) AddButton(name string, button *Button) {
 	u.buttons[name] = button
@@ -170,7 +172,7 @@ func (u *UILayout) Draw(screen *ebiten.Image) {
 		bar.Draw(screen)
 	}
 }
-func (u *UILayout) DrawCam(screen *ebiten.Image, cam components.Camera) {
+func (u *UILayout) DrawCam(screen *ebiten.Image, cam spark.Cam) {
 	for _, button := range u.buttons {
 		button.DrawCam(screen, cam)
 	}

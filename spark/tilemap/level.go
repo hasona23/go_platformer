@@ -3,8 +3,10 @@ package tilemap
 import (
 	"errors"
 	"fmt"
-	"go_platformer/components"
+
 	"log"
+
+	"go_platformer/spark"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -28,17 +30,17 @@ func NewLevel(file []byte) *Level {
 	}
 	return &level
 }
-func (l Level) GetCollisionTilesMap() map[[2]int]components.Rect {
-	collisionMap := make(map[[2]int]components.Rect)
+func (l Level) GetCollisionTilesMap() map[[2]int]spark.Rect {
+	collisionMap := make(map[[2]int]spark.Rect)
 	for _, layer := range l.Tilemap.CollisionLayers {
 		for _, tile := range layer.Tiles {
-			collisionMap[[2]int{tile.X, tile.Y}] = components.NewRect(tile.X*l.Tilemap.TileSize, tile.Y*l.Tilemap.TileSize, l.Tilemap.TileSize, l.Tilemap.TileSize)
+			collisionMap[[2]int{tile.X, tile.Y}] = spark.NewRect(tile.X*l.Tilemap.TileSize, tile.Y*l.Tilemap.TileSize, l.Tilemap.TileSize, l.Tilemap.TileSize)
 		}
 	}
 	return collisionMap
 }
-func (l Level) GetCollisionTiles() []components.Rect {
-	r := []components.Rect{}
+func (l Level) GetCollisionTiles() []spark.Rect {
+	r := []spark.Rect{}
 	for _, v := range l.GetCollisionTilesMap() {
 		r = append(r, v)
 	}
@@ -59,6 +61,6 @@ func (l Level) GetSizeInPixels() [2]int {
 func (l Level) Draw(screen *ebiten.Image, spriteSheet *ebiten.Image, showCollisions bool) {
 	l.Tilemap.Draw(screen, spriteSheet, showCollisions)
 }
-func (l Level) DrawCamera(screen *ebiten.Image, spriteSheet *ebiten.Image, cam components.Camera, showCollisions bool) {
+func (l Level) DrawCamera(screen *ebiten.Image, spriteSheet *ebiten.Image, cam spark.Cam, showCollisions bool) {
 	l.Tilemap.DrawCamera(screen, spriteSheet, cam, showCollisions)
 }

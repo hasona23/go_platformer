@@ -1,10 +1,11 @@
 package ui
 
 import (
-	"go_platformer/components"
 	"image"
 	"image/color"
 	"math"
+
+	"go_platformer/spark"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -13,7 +14,7 @@ import (
 // bar ui with values such as the health bar
 type Bar struct {
 	img   *ebiten.Image //note: try avoid having spaces in your sprite as spaces count in the width
-	rect  components.Rect
+	rect  spark.Rect
 	max   int
 	value int
 	BarStyle
@@ -23,18 +24,18 @@ type Bar struct {
 type BarStyle struct {
 	BarColor  color.Color //color of bar itself like red in hp bar
 	BackColor color.Color //color of rect behind bar like black in most bars
-	Scale     components.Point
+	Scale     spark.Point
 }
 
 // return a new BarStyle
-func NewBarStyle(barColor, BackColor color.Color, scale components.Point) BarStyle {
+func NewBarStyle(barColor, BackColor color.Color, scale spark.Point) BarStyle {
 	return BarStyle{BarColor: barColor, BackColor: BackColor, Scale: scale}
 }
 
 // returns a new bar with an img(sprite)
-func NewSpriteBar(img *ebiten.Image, x, y, value int, scale components.Point) *Bar {
+func NewSpriteBar(img *ebiten.Image, x, y, value int, scale spark.Point) *Bar {
 	return &Bar{img: img,
-		rect:     components.NewRect(x, y, img.Bounds().Dx(), img.Bounds().Dy()),
+		rect:     spark.NewRect(x, y, img.Bounds().Dx(), img.Bounds().Dy()),
 		value:    value,
 		max:      value,
 		BarStyle: NewBarStyle(color.Black, color.Black, scale),
@@ -53,9 +54,9 @@ func (b *Bar) IsEmpty() bool {
 
 // Value is same as the width  no differnce . this returns a rectangular bar need incase your dont want sprites
 // like  for testing and demo
-func NewBar(x, y, value, height int, scale components.Point, barColor, backColor color.Color) *Bar {
+func NewBar(x, y, value, height int, scale spark.Point, barColor, backColor color.Color) *Bar {
 	return &Bar{img: nil,
-		rect:     components.NewRect(x, y, value*scale.X, height*scale.Y),
+		rect:     spark.NewRect(x, y, value*scale.X, height*scale.Y),
 		value:    value,
 		max:      value,
 		BarStyle: NewBarStyle(barColor, backColor, scale),
@@ -119,26 +120,26 @@ func (b *Bar) SetBarColor(c color.Color) {
 // note: img is rectangle bar if img is nil
 func (b *Bar) Draw(screen *ebiten.Image) {
 	if b.img == nil {
-		b.drawRectBar(screen, components.Point{X: 0, Y: 0})
+		b.drawRectBar(screen, spark.Point{X: 0, Y: 0})
 	} else {
-		b.drawImageBar(screen, components.Point{X: 0, Y: 0})
+		b.drawImageBar(screen, spark.Point{X: 0, Y: 0})
 	}
 }
 
 // draw bar in a dynamic pos
 // suitable for moving object like enemies or want to make bar has certain pos like hp of and object like rock
 // note: img is rectangle bar if img is nil
-func (b *Bar) DrawCam(screen *ebiten.Image, cam components.Camera) {
+func (b *Bar) DrawCam(screen *ebiten.Image, cam spark.Cam) {
 	if b.img == nil {
-		b.drawRectBar(screen, components.Point(cam))
+		b.drawRectBar(screen, spark.Point{X: int(cam.X), Y: int(cam.Y)})
 	} else {
-		b.drawImageBar(screen, components.Point(cam))
+		b.drawImageBar(screen, spark.Point{X: int(cam.X), Y: int(cam.Y)})
 	}
 }
 
 // draws image of bar as rect .
 // used when bar img is nil
-func (b *Bar) drawRectBar(screen *ebiten.Image, offset components.Point) {
+func (b *Bar) drawRectBar(screen *ebiten.Image, offset spark.Point) {
 	x := float32(b.rect.X/b.Scale.X + offset.X)
 	y := float32(b.rect.Y/b.Scale.Y + offset.Y)
 	width := float32(b.rect.Width)
@@ -150,7 +151,7 @@ func (b *Bar) drawRectBar(screen *ebiten.Image, offset components.Point) {
 
 // draws the image of bar
 // used when img not nil
-func (b *Bar) drawImageBar(screen *ebiten.Image, offset components.Point) {
+func (b *Bar) drawImageBar(screen *ebiten.Image, offset spark.Point) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(float64(b.Scale.X), float64(b.Scale.Y))
 	op.GeoM.Translate(float64(b.rect.X/b.Scale.X)+float64(offset.X), float64(b.rect.Y/b.Scale.Y)+float64(offset.Y))

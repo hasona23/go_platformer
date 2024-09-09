@@ -1,4 +1,4 @@
-package components
+package spark
 
 type Rect struct {
 	X, Y, Width, Height int

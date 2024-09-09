@@ -1,9 +1,10 @@
 package ui
 
 import (
-	"go_platformer/components"
 	"image/color"
 	"math"
+
+	"go_platformer/spark"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -29,39 +30,37 @@ type Event func(b *Button)
 type Button struct {
 	sprite      *ebiten.Image
 	Text        Label
-	rect        components.Rect
+	rect        spark.Rect
 	clickEvents []Event
 	hoverEvents []Event
 	Style       ButtonStyle
 }
 
-func NewSpriteButton(sprite *ebiten.Image, text string, x, y, fontSize, scale int, fontFile []byte, textColor color.Color) *Button {
+func NewSpriteButton(sprite *ebiten.Image, text string, x, y float32, fontSize, scale int, fontFile []byte, textColor color.Color) *Button {
 
 	button := &Button{
 		Text:   *NewLabel(text, x, y, fontFile, fontSize, textColor),
 		sprite: sprite,
 		Style: ButtonStyle{
-			X:     x,
-			Y:     y,
-			Scale: float64(scale),
+			Pos:   spark.Vec2{x, y},
+			Scale: scale,
 			Color: color.Transparent,
 		},
 		clickEvents: []Event{},
 		hoverEvents: []Event{},
 	}
-	button.rect = components.NewRect(x, y, scale*sprite.Bounds().Dx(), scale*sprite.Bounds().Dy())
+	button.rect = spark.NewRect(int(x), int(y), scale*sprite.Bounds().Dx(), scale*sprite.Bounds().Dy())
 	button.Style.defaultTextColor = textColor
 	return button
 }
 
 // normal square/rectangle button with border background color
-func NewButton(txt string, x, y, fontSize int, scale float64, fontFile []byte, textColor, backColor, bordercolor color.Color) *Button {
+func NewButton(txt string, x, y float32, fontSize int, scale int, fontFile []byte, textColor, backColor, bordercolor color.Color) *Button {
 
 	button := &Button{
 		Text: *NewLabel(txt, x, y, fontFile, fontSize, color.Black),
 		Style: ButtonStyle{
-			X:               x,
-			Y:               y,
+			Pos:             spark.Vec2{x, y},
 			Scale:           scale,
 			BorderThickness: DefaultBorderThickness,
 			Color:           color.Transparent,
@@ -76,14 +75,14 @@ func NewButton(txt string, x, y, fontSize int, scale float64, fontFile []byte, t
 
 // Button ButtonStyle is made Primarily for when there is no sprite or make effects for sprite
 type ButtonStyle struct {
-	X, Y               int
+	Pos                spark.Vec2
 	Color              color.Color
 	BorderColor        color.Color
 	BackColor          color.Color
 	defaultBackColor   color.Color
 	defaultBorderColor color.Color
 	defaultTextColor   color.Color
-	Scale              float64
+	Scale              int
 	BorderThickness    int
 	TextOrientation    Orientation
 }
@@ -125,8 +124,8 @@ func (b *Button) OnHover() {
 }
 func (b *Button) Centre() {
 	b.UpdateRect()
-	b.Style.X -= b.rect.Width / 2
-	b.Style.Y -= b.rect.Height / 2
+	b.Style.Pos[0] -= float32(b.rect.Width) / 2
+	b.Style.Pos[1] -= float32(b.rect.Height) / 2
 }
 
 func (b *Button) DefaultColor() {
@@ -138,48 +137,49 @@ func (b *Button) DefaultColor() {
 func (b *Button) UpdateRect() {
 
 	if b.sprite != nil {
-		b.rect = components.NewRect(b.Style.X, b.Style.Y, int(float64(b.sprite.Bounds().Dx())*b.Style.Scale), int(float64(b.sprite.Bounds().Dy())*b.Style.Scale))
+		b.rect = spark.NewRect(int(b.Style.Pos[0]), int(b.Style.Pos[1]), int((b.sprite.Bounds().Dx())*b.Style.Scale),
+			int((b.sprite.Bounds().Dy())*b.Style.Scale))
 	} else {
 		f := &text.GoTextFace{Source: b.Text.Style.Font, Size: float64(b.Text.Style.Size)}
 		width, height := text.Measure(b.Text.Text, f, 1)
-		b.rect = components.NewRect(b.Style.X, b.Style.Y, int(width*b.Style.Scale), int(height*b.Style.Scale))
+		b.rect = spark.NewRect(int(b.Style.Pos[0]), int(b.Style.Pos[1]), int(width)*b.Style.Scale, int(height)*b.Style.Scale)
 	}
 }
-func (b *Button) draw(screen *ebiten.Image, offset components.Point) {
+func (b *Button) draw(screen *ebiten.Image, offset spark.Vec2) {
 	b.drawButtonWithOffset(screen, offset)
 	b.drawButtonTextWithOffset(screen, offset)
 }
 
 func (b *Button) Draw(screen *ebiten.Image) {
-	b.draw(screen, components.Point{X: 0, Y: 0})
+	b.draw(screen, spark.Vec2{0, 0})
 }
 
-func (b *Button) DrawCam(screen *ebiten.Image, cam components.Camera) {
-	b.draw(screen, components.Point(cam))
+func (b *Button) DrawCam(screen *ebiten.Image, cam spark.Cam) {
+	b.draw(screen, spark.Vec2{cam.X, cam.Y})
 }
 
-func (b *Button) drawButtonWithOffset(screen *ebiten.Image, offset components.Point) {
+func (b *Button) drawButtonWithOffset(screen *ebiten.Image, offset spark.Vec2) {
 	if b.sprite != nil {
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(math.Round(float64(b.rect.X/int(b.Style.Scale)+offset.X)), math.Round(float64(b.rect.X/int(b.Style.Scale)+offset.X)))
+		op.GeoM.Translate(math.Round(float64(b.rect.X/(b.Style.Scale))+float64(offset[0])), math.Round(float64(b.rect.X/int(b.Style.Scale))+float64(offset[1])))
 		op.GeoM.Scale(float64(b.Style.Scale), float64(b.Style.Scale))
 		//op.ColorScale.ScaleWithColor(b.Style.Color)
 		screen.DrawImage(b.sprite, op)
 	} else {
-		vector.DrawFilledRect(screen, float32(math.Round(float64(b.rect.X/int(b.Style.Scale)+offset.X))), float32(math.Round(float64(b.rect.X/int(b.Style.Scale)+offset.X))), float32(b.rect.Width), float32(b.rect.Height), b.Style.BackColor, false)
-		vector.StrokeRect(screen, float32(b.rect.X+offset.X), float32(b.rect.Y+offset.Y), float32((b.rect.Width + b.Style.BorderThickness/2)),
+		vector.DrawFilledRect(screen, float32(math.Round(float64(b.rect.X/(b.Style.Scale))+float64(offset[0]))), float32(math.Round(float64(b.rect.X/(b.Style.Scale))+float64(offset[1]))), float32(b.rect.Width), float32(b.rect.Height), b.Style.BackColor, false)
+		vector.StrokeRect(screen, float32(b.rect.X)+offset[0], float32(b.rect.Y)+offset[1], float32((b.rect.Width + b.Style.BorderThickness/2)),
 			float32(b.rect.Height+b.Style.BorderThickness/2),
 			float32(b.Style.BorderThickness),
 			b.Style.BorderColor, false)
 	}
 }
 
-func (b *Button) drawButtonTextWithOffset(screen *ebiten.Image, offset components.Point) {
+func (b *Button) drawButtonTextWithOffset(screen *ebiten.Image, offset spark.Vec2) {
 	opText := &text.DrawOptions{}
 	f := &text.GoTextFace{Source: b.Text.Style.Font, Size: float64(b.Text.Style.Size)}
 	width, height := text.Measure(b.Text.Text, f, 1)
 
-	opText.GeoM.Translate(float64(b.rect.X+offset.X), float64(b.rect.Y+offset.Y))
+	opText.GeoM.Translate(float64(float32(b.rect.X)+offset[0]), float64(float32(b.rect.Y)+offset[1]))
 	if b.Style.Scale != 1 {
 		b.applyTextOrientation(opText, width, height)
 	}
@@ -203,7 +203,7 @@ func (b *Button) SetText(newText string) {
 	b.Text.Text = newText
 	b.UpdateRect()
 }
-func (b *Button) SetScale(scale float64) {
+func (b *Button) SetScale(scale int) {
 	b.Style.Scale = scale
 	b.UpdateRect()
 }

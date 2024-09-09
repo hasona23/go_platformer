@@ -2,9 +2,10 @@ package tilemap
 
 import (
 	"encoding/json"
-	"go_platformer/components"
 	"image"
 	"image/color"
+
+	"go_platformer/spark"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -88,7 +89,7 @@ func (t *TilemapJSON) Draw(screen *ebiten.Image, spriteSheet *ebiten.Image, show
 
 }
 
-func (t *TilemapJSON) DrawCamera(screen *ebiten.Image, spriteSheet *ebiten.Image, camera components.Camera, showCollision bool) {
+func (t *TilemapJSON) DrawCamera(screen *ebiten.Image, spriteSheet *ebiten.Image, camera spark.Cam, showCollision bool) {
 	for _, layer := range t.TileLayers {
 		for _, tile := range layer.Tiles {
 			if tile.Id == 0 {
@@ -108,7 +109,7 @@ func (t *TilemapJSON) DrawCamera(screen *ebiten.Image, spriteSheet *ebiten.Image
 			op.GeoM.Reset()
 			if showCollision && layer.Class == "collision" {
 				//fmt.Println(float32(tile.X*layer.TileSize+camera.X), float32(tile.Y*layer.TileSize+camera.Y))
-				vector.DrawFilledRect(screen, float32(tile.X*layer.TileSize+camera.X), float32(tile.Y*layer.TileSize+camera.Y), float32(layer.TileSize),
+				vector.DrawFilledRect(screen, float32(tile.X*layer.TileSize)+camera.X, float32(tile.Y*layer.TileSize)+camera.Y, float32(layer.TileSize),
 					float32(layer.TileSize), color.RGBA{123, 123, 123, 123}, false)
 
 			}
