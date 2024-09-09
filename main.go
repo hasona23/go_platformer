@@ -56,7 +56,7 @@ type Game struct {
 
 func (g *Game) Init() {
 	var err error
-
+	g.levels = make(map[string]*tilemap.Level)
 	g.levels["level1"] = tilemap.NewLevel(assets.Level1Map)
 	g.cam = *spark.NewCamera(0, 0)
 	enemyObjects, err := g.levels["level1"].GetObjectsByName("Enemies")
