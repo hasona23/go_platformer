@@ -27,7 +27,7 @@ type Player struct {
 
 func NewPlayer() *Player {
 	player := &Player{}
-	player.PhysicsEntity = spark.NewPhyscisEntity(40, 330, 1, 1, "player")
+	player.PhysicsEntity = spark.NewPhyscisEntity(40, 500, 1, 1, "player")
 
 	player.Sprite = *spark.NewAnimeSprite(assets.SpriteSheet, 16, 16)
 	player.Sprite.Add(spark.NewAnimationFrame(0, 1, 4, 5, 2, "idle"))

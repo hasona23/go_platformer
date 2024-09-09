@@ -39,6 +39,7 @@
         "tilemap_packed.tsx",
         "untitled.tmx"
     ],
+    "resizeMap.removeObjects": true,
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
         "height": 16,
